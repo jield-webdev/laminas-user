@@ -1,4 +1,5 @@
 <?php
+
 namespace ZfcUser\Factory\Form;
 
 use Zend\ServiceManager\FactoryInterface;
@@ -20,10 +21,10 @@ class ChangeEmailFormFactory implements FactoryInterface
 
         $userMapper = $serviceManager->get('zfcuser_user_mapper');
 
-        $emailValidator = new NoRecordExists(array(
+        $emailValidator = new NoRecordExists([
             'mapper' => $userMapper,
-            'key' => 'email',
-        ));
+            'key'    => 'email',
+        ]);
 
         $inputFilter = new ChangeEmailFilter(
             $options,

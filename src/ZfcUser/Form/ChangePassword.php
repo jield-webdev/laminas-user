@@ -17,59 +17,59 @@ class ChangePassword extends ProvidesEventsForm
 
         parent::__construct($name);
 
-        $this->add(array(
-            'name' => 'identity',
-            'options' => array(
+        $this->add([
+            'name'       => 'identity',
+            'options'    => [
                 'label' => '',
-            ),
-            'attributes' => array(
-                'id' => 'identity',
+            ],
+            'attributes' => [
+                'id'   => 'identity',
                 'type' => 'hidden',
-            ),
-        ));
+            ],
+        ]);
 
-        $this->add(array(
-            'name' => 'credential',
-            'type' => 'password',
-            'options' => array(
+        $this->add([
+            'name'       => 'credential',
+            'type'       => 'password',
+            'options'    => [
                 'label' => 'Current Password',
-            ),
-            'attributes' => array(
-                'id' => 'credential',
+            ],
+            'attributes' => [
+                'id'   => 'credential',
                 'type' => 'password',
-            ),
-        ));
+            ],
+        ]);
 
-        $this->add(array(
-            'name' => 'newCredential',
-            'options' => array(
+        $this->add([
+            'name'       => 'newCredential',
+            'options'    => [
                 'label' => 'New Password',
-            ),
-            'attributes' => array(
-                'id' => 'newCredential',
+            ],
+            'attributes' => [
+                'id'   => 'newCredential',
                 'type' => 'password',
-            ),
-        ));
+            ],
+        ]);
 
-        $this->add(array(
-            'name' => 'newCredentialVerify',
-            'type' => 'password',
-            'options' => array(
+        $this->add([
+            'name'       => 'newCredentialVerify',
+            'type'       => 'password',
+            'options'    => [
                 'label' => 'Verify New Password',
-            ),
-            'attributes' => array(
-                'id' => 'newCredentialVerify',
+            ],
+            'attributes' => [
+                'id'   => 'newCredentialVerify',
                 'type' => 'password',
-            ),
-        ));
+            ],
+        ]);
 
-        $this->add(array(
-            'name' => 'submit',
-            'attributes' => array(
+        $this->add([
+            'name'       => 'submit',
+            'attributes' => [
                 'value' => 'Submit',
                 'type'  => 'submit'
-            ),
-        ));
+            ],
+        ]);
     }
 
     /**

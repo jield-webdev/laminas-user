@@ -2,14 +2,23 @@
 
 namespace ZfcUser\Authentication\Adapter;
 
-use Laminas\Authentication\Storage;
-
 abstract class AbstractAdapter implements ChainableAdapter
 {
     /**
      * @var StorageInterface
      */
     protected $storage;
+
+    /**
+     * Check if this adapter is satisfied or not
+     *
+     * @return bool
+     */
+    public function isSatisfied()
+    {
+        $storage = $this->getStorage()->read();
+        return (isset($storage['is_satisfied']) && true === $storage['is_satisfied']);
+    }
 
     /**
      * Returns the persistent storage handler
@@ -30,24 +39,13 @@ abstract class AbstractAdapter implements ChainableAdapter
     /**
      * Sets the persistent storage handler
      *
-     * @param  StorageInterface $storage
+     * @param StorageInterface $storage
      * @return AbstractAdapter Provides a fluent interface
      */
     public function setStorage(StorageInterface $storage)
     {
         $this->storage = $storage;
         return $this;
-    }
-
-    /**
-     * Check if this adapter is satisfied or not
-     *
-     * @return bool
-     */
-    public function isSatisfied()
-    {
-        $storage = $this->getStorage()->read();
-        return (isset($storage['is_satisfied']) && true === $storage['is_satisfied']);
     }
 
     /**
@@ -59,9 +57,9 @@ abstract class AbstractAdapter implements ChainableAdapter
     public function setSatisfied($bool = true)
     {
         $storage = $this->getStorage();
-        $data    = $storage->read() ?: array();
+        $data    = $storage->read() ?: [];
 
-        $data['is_satisfied'] = (bool) $bool;
+        $data['is_satisfied'] = (bool)$bool;
         $storage->write($data);
 
         return $this;

@@ -1,4 +1,5 @@
 <?php
+
 namespace ZfcUser\Factory;
 
 use Zend\Db;
@@ -30,10 +31,9 @@ class UserMapperFactory implements FactoryInterface
         $hydrator = $serviceLocator->get('zfcuser_user_hydrator');
 
         $mapper
-            ->setEntityPrototype(new $entityClass)
+            ->setEntityPrototype(new $entityClass())
             ->setHydrator($hydrator)
-            ->setTableName($options->getTableName())
-        ;
+            ->setTableName($options->getTableName());
 
         return $mapper;
     }

@@ -54,17 +54,17 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     /**
      * @var Array
      */
-    protected $allowedLoginStates = array( null, 1 );
+    protected $allowedLoginStates = [null, 1];
 
     /**
      * @var array
      */
-    protected $authAdapters = array( 100 => 'ZfcUser\Authentication\Adapter\Db' );
+    protected $authAdapters = [100 => 'ZfcUser\Authentication\Adapter\Db'];
 
     /**
      * @var array
      */
-    protected $authIdentityFields = array( 'email' );
+    protected $authIdentityFields = ['email'];
 
     /**
      * @var string
@@ -102,6 +102,15 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
 
     protected $tableName = 'user';
 
+    /**
+     * get login redirect route
+     *
+     * @return string
+     */
+    public function getLoginRedirectRoute()
+    {
+        return $this->loginRedirectRoute;
+    }
 
     /**
      * set login redirect route
@@ -116,13 +125,13 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * get login redirect route
+     * get logout redirect route
      *
      * @return string
      */
-    public function getLoginRedirectRoute()
+    public function getLogoutRedirectRoute()
     {
-        return $this->loginRedirectRoute;
+        return $this->logoutRedirectRoute;
     }
 
     /**
@@ -138,13 +147,13 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * get logout redirect route
+     * get use redirect param if present
      *
-     * @return string
+     * @return bool
      */
-    public function getLogoutRedirectRoute()
+    public function getUseRedirectParameterIfPresent()
     {
-        return $this->logoutRedirectRoute;
+        return $this->useRedirectParameterIfPresent;
     }
 
     /**
@@ -160,13 +169,13 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * get use redirect param if present
+     * get the view template for the user login widget
      *
-     * @return bool
+     * @return string
      */
-    public function getUseRedirectParameterIfPresent()
+    public function getUserLoginWidgetViewTemplate()
     {
-        return $this->useRedirectParameterIfPresent;
+        return $this->userLoginWidgetViewTemplate;
     }
 
     /**
@@ -182,13 +191,13 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * get the view template for the user login widget
+     * get enable user registration
      *
-     * @return string
+     * @return bool
      */
-    public function getUserLoginWidgetViewTemplate()
+    public function getEnableRegistration()
     {
-        return $this->userLoginWidgetViewTemplate;
+        return $this->enableRegistration;
     }
 
     /**
@@ -204,13 +213,13 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * get enable user registration
+     * get login form timeout in seconds
      *
-     * @return bool
+     * @return int
      */
-    public function getEnableRegistration()
+    public function getLoginFormTimeout()
     {
-        return $this->enableRegistration;
+        return $this->loginFormTimeout;
     }
 
     /**
@@ -226,13 +235,13 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * get login form timeout in seconds
+     * get user form timeout in seconds
      *
      * @return int
      */
-    public function getLoginFormTimeout()
+    public function getUserFormTimeout()
     {
-        return $this->loginFormTimeout;
+        return $this->userFormTimeout;
     }
 
     /**
@@ -248,13 +257,13 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * get user form timeout in seconds
+     * get login after registration
      *
-     * @return int
+     * @return bool
      */
-    public function getUserFormTimeout()
+    public function getLoginAfterRegistration()
     {
-        return $this->userFormTimeout;
+        return $this->loginAfterRegistration;
     }
 
     /**
@@ -270,16 +279,6 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * get login after registration
-     *
-     * @return bool
-     */
-    public function getLoginAfterRegistration()
-    {
-        return $this->loginAfterRegistration;
-    }
-
-    /**
      * get user state usage for registration/login process
      *
      * @return int
@@ -292,7 +291,7 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     /**
      * set user state usage for registration/login process
      *
-     * @param boolean $flag
+     * @param bool $flag
      * @return ModuleOptions
      */
     public function setEnableUserState($flag)
@@ -346,6 +345,16 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
+     * get auth adapters
+     *
+     * @return array
+     */
+    public function getAuthAdapters()
+    {
+        return $this->authAdapters;
+    }
+
+    /**
      * set auth adapters
      *
      * @param array $authAdapterss
@@ -358,13 +367,13 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * get auth adapters
+     * get auth identity fields
      *
      * @return array
      */
-    public function getAuthAdapters()
+    public function getAuthIdentityFields()
     {
-        return $this->authAdapters;
+        return $this->authIdentityFields;
     }
 
     /**
@@ -380,28 +389,6 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * get auth identity fields
-     *
-     * @return array
-     */
-    public function getAuthIdentityFields()
-    {
-        return $this->authIdentityFields;
-    }
-
-    /**
-     * set enable username
-     *
-     * @param bool $flag
-     * @return ModuleOptions
-     */
-    public function setEnableUsername($flag)
-    {
-        $this->enableUsername = (bool) $flag;
-        return $this;
-    }
-
-    /**
      * get enable username
      *
      * @return bool
@@ -412,14 +399,14 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * set enable display name
+     * set enable username
      *
      * @param bool $flag
      * @return ModuleOptions
      */
-    public function setEnableDisplayName($flag)
+    public function setEnableUsername($flag)
     {
-        $this->enableDisplayName = (bool) $flag;
+        $this->enableUsername = (bool)$flag;
         return $this;
     }
 
@@ -431,6 +418,28 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     public function getEnableDisplayName()
     {
         return $this->enableDisplayName;
+    }
+
+    /**
+     * set enable display name
+     *
+     * @param bool $flag
+     * @return ModuleOptions
+     */
+    public function setEnableDisplayName($flag)
+    {
+        $this->enableDisplayName = (bool)$flag;
+        return $this;
+    }
+
+    /**
+     * get user entity class name
+     *
+     * @return string
+     */
+    public function getUserEntityClass()
+    {
+        return $this->userEntityClass;
     }
 
     /**
@@ -446,13 +455,13 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * get user entity class name
+     * get password cost
      *
-     * @return string
+     * @return int
      */
-    public function getUserEntityClass()
+    public function getPasswordCost()
     {
-        return $this->userEntityClass;
+        return $this->passwordCost;
     }
 
     /**
@@ -468,13 +477,13 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
     }
 
     /**
-     * get password cost
+     * get user table name
      *
-     * @return int
+     * @return string
      */
-    public function getPasswordCost()
+    public function getTableName()
     {
-        return $this->passwordCost;
+        return $this->tableName;
     }
 
     /**
@@ -484,16 +493,6 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
      */
     public function setTableName($tableName)
     {
-        $this->tableName=$tableName;
-    }
-
-    /**
-     * get user table name
-     *
-     * @return string
-     */
-    public function getTableName()
-    {
-        return $this->tableName;
+        $this->tableName = $tableName;
     }
 }

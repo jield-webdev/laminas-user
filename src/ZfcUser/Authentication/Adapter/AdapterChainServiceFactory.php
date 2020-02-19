@@ -1,18 +1,25 @@
 <?php
+
 namespace ZfcUser\Authentication\Adapter;
 
 use Interop\Container\ContainerInterface;
-use Interop\Container\Exception\ContainerException;
-use Laminas\ServiceManager\Exception\ServiceNotCreatedException;
-use Laminas\ServiceManager\Exception\ServiceNotFoundException;
 use Laminas\ServiceManager\Factory\FactoryInterface;
 use Laminas\ServiceManager\ServiceLocatorInterface;
-use ZfcUser\Authentication\Adapter\AdapterChain;
-use ZfcUser\Options\ModuleOptions;
 use ZfcUser\Authentication\Adapter\Exception\OptionsNotFoundException;
+use ZfcUser\Options\ModuleOptions;
 
 class AdapterChainServiceFactory implements FactoryInterface
 {
+    /**
+     * @var ModuleOptions
+     */
+    protected $options;
+
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        $this->__invoke($serviceLocator, null);
+    }
+
     public function __invoke(ContainerInterface $serviceLocator, $requestedName, array $options = null)
     {
         $chain = new AdapterChain();
@@ -24,39 +31,16 @@ class AdapterChainServiceFactory implements FactoryInterface
         foreach ($options->getAuthAdapters() as $priority => $adapterName) {
             $adapter = $serviceLocator->get($adapterName);
 
-            if (is_callable(array($adapter, 'authenticate'))) {
-                $chain->getEventManager()->attach('authenticate', array($adapter, 'authenticate'), $priority);
+            if (is_callable([$adapter, 'authenticate'])) {
+                $chain->getEventManager()->attach('authenticate', [$adapter, 'authenticate'], $priority);
             }
 
-            if (is_callable(array($adapter, 'logout'))) {
-                $chain->getEventManager()->attach('logout', array($adapter, 'logout'), $priority);
+            if (is_callable([$adapter, 'logout'])) {
+                $chain->getEventManager()->attach('logout', [$adapter, 'logout'], $priority);
             }
         }
 
         return $chain;
-    }
-
-    /**
-     * @var ModuleOptions
-     */
-    protected $options;
-
-    public function createService(ServiceLocatorInterface $serviceLocator)
-    {
-        $this->__invoke($serviceLocator, null);
-    }
-
-
-    /**
-     * set options
-     *
-     * @param ModuleOptions $options
-     * @return AdapterChainServiceFactory
-     */
-    public function setOptions(ModuleOptions $options)
-    {
-        $this->options = $options;
-        return $this;
     }
 
     /**
@@ -80,5 +64,17 @@ class AdapterChainServiceFactory implements FactoryInterface
         }
 
         return $this->options;
+    }
+
+    /**
+     * set options
+     *
+     * @param ModuleOptions $options
+     * @return AdapterChainServiceFactory
+     */
+    public function setOptions(ModuleOptions $options)
+    {
+        $this->options = $options;
+        return $this;
     }
 }

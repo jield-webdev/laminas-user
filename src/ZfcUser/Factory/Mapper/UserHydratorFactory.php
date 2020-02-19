@@ -1,4 +1,5 @@
 <?php
+
 namespace ZfcUser\Factory\Mapper;
 
 use Zend\Crypt\Password\Bcrypt;
@@ -14,7 +15,7 @@ class UserHydratorFactory implements FactoryInterface
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         $options = $serviceLocator->get('zfcuser_module_options');
-        $crypto  = new Bcrypt;
+        $crypto  = new Bcrypt();
         $crypto->setCost($options->getPasswordCost());
         return new Mapper\UserHydrator($crypto);
     }

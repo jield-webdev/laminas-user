@@ -40,16 +40,6 @@ class AdapterChainEvent extends Event
     }
 
     /**
-     * getCode
-     *
-     * @return int
-     */
-    public function getCode()
-    {
-        return $this->getParam('code');
-    }
-
-    /**
      * setCode
      *
      * @param int $code
@@ -62,25 +52,35 @@ class AdapterChainEvent extends Event
     }
 
     /**
+     * setMessages
+     *
+     * @param array $messages
+     * @return AdapterChainEvent
+     */
+    public function setMessages($messages = [])
+    {
+        $this->setParam('messages', $messages);
+        return $this;
+    }
+
+    /**
+     * getCode
+     *
+     * @return int
+     */
+    public function getCode()
+    {
+        return $this->getParam('code');
+    }
+
+    /**
      * getMessages
      *
      * @return array
      */
     public function getMessages()
     {
-        return $this->getParam('messages') ?: array();
-    }
-
-    /**
-     * setMessages
-     *
-     * @param array $messages
-     * @return AdapterChainEvent
-     */
-    public function setMessages($messages = array())
-    {
-        $this->setParam('messages', $messages);
-        return $this;
+        return $this->getParam('messages') ?: [];
     }
 
     /**

@@ -52,7 +52,7 @@ class User implements UserInterface
      */
     public function setId($id)
     {
-        $this->id = (int) $id;
+        $this->id = (int)$id;
         return $this;
     }
 
@@ -162,7 +162,7 @@ class User implements UserInterface
      */
     public function setState($state)
     {
-        $this->state = (int) $state;
+        $this->state = (int)$state;
         return $this;
     }
 }

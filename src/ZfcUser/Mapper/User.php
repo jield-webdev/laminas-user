@@ -2,20 +2,20 @@
 
 namespace ZfcUser\Mapper;
 
-use ZfcUser\Entity\UserInterface as UserEntityInterface;
 use Laminas\Hydrator\HydratorInterface;
+use ZfcUser\Entity\UserInterface as UserEntityInterface;
 
 class User extends AbstractDbMapper implements UserInterface
 {
-    protected $tableName  = 'user';
+    protected $tableName = 'user';
 
     public function findByEmail($email)
     {
         $select = $this->getSelect()
-                       ->where(array('email' => $email));
+            ->where(['email' => $email]);
         $entity = $this->select($select)->current();
 
-        $this->getEventManager()->trigger('find', $this, array('entity' => $entity));
+        $this->getEventManager()->trigger('find', $this, ['entity' => $entity]);
 
         return $entity;
     }
@@ -23,10 +23,10 @@ class User extends AbstractDbMapper implements UserInterface
     public function findByUsername($username)
     {
         $select = $this->getSelect()
-                       ->where(array('username' => $username));
+            ->where(['username' => $username]);
         $entity = $this->select($select)->current();
 
-        $this->getEventManager()->trigger('find', $this, array('entity' => $entity));
+        $this->getEventManager()->trigger('find', $this, ['entity' => $entity]);
 
         return $entity;
     }
@@ -34,10 +34,10 @@ class User extends AbstractDbMapper implements UserInterface
     public function findById($id)
     {
         $select = $this->getSelect()
-                       ->where(array('user_id' => $id));
+            ->where(['user_id' => $id]);
         $entity = $this->select($select)->current();
 
-        $this->getEventManager()->trigger('find', $this, array('entity' => $entity));
+        $this->getEventManager()->trigger('find', $this, ['entity' => $entity]);
 
         return $entity;
     }
@@ -55,7 +55,7 @@ class User extends AbstractDbMapper implements UserInterface
     public function insert(UserEntityInterface $entity, $tableName = null, HydratorInterface $hydrator = null)
     {
         $hydrator = $hydrator ?: $this->getHydrator();
-        $result = parent::insert($entity, $tableName, $hydrator);
+        $result   = parent::insert($entity, $tableName, $hydrator);
 
         $entity->setId($result->getGeneratedValue());
 
@@ -65,7 +65,7 @@ class User extends AbstractDbMapper implements UserInterface
     public function update(UserEntityInterface $entity, $where = null, $tableName = null, HydratorInterface $hydrator = null)
     {
         if (!$where) {
-            $where = array('id' => $entity->getId());
+            $where = ['id' => $entity->getId()];
         }
 
         return parent::update($entity, $where, $tableName, $hydrator);

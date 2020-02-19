@@ -17,58 +17,58 @@ class ChangeEmail extends ProvidesEventsForm
 
         parent::__construct($name);
 
-        $this->add(array(
-            'name' => 'identity',
-            'options' => array(
+        $this->add([
+            'name'       => 'identity',
+            'options'    => [
                 'label' => '',
-            ),
-            'attributes' => array(
-                'id' => 'identity',
+            ],
+            'attributes' => [
+                'id'   => 'identity',
                 'type' => 'hidden',
-            ),
-        ));
+            ],
+        ]);
 
-        $this->add(array(
-            'name' => 'newIdentity',
-            'options' => array(
+        $this->add([
+            'name'       => 'newIdentity',
+            'options'    => [
                 'label' => 'New Email',
-            ),
-            'attributes' => array(
-                'id' => 'newIdentity',
+            ],
+            'attributes' => [
+                'id'   => 'newIdentity',
                 'type' => 'text',
-            ),
-        ));
+            ],
+        ]);
 
-        $this->add(array(
-            'name' => 'newIdentityVerify',
-            'options' => array(
+        $this->add([
+            'name'       => 'newIdentityVerify',
+            'options'    => [
                 'label' => 'Verify New Email',
-            ),
-            'attributes' => array(
-                'id' => 'newIdentityVerify',
+            ],
+            'attributes' => [
+                'id'   => 'newIdentityVerify',
                 'type' => 'text',
-            ),
-        ));
+            ],
+        ]);
 
-        $this->add(array(
-            'name' => 'credential',
-            'type' => 'password',
-            'options' => array(
+        $this->add([
+            'name'       => 'credential',
+            'type'       => 'password',
+            'options'    => [
                 'label' => 'Password',
-            ),
-            'attributes' => array(
-                'id' => 'credential',
+            ],
+            'attributes' => [
+                'id'   => 'credential',
                 'type' => 'password',
-            ),
-        ));
+            ],
+        ]);
 
-        $this->add(array(
-            'name' => 'submit',
-            'attributes' => array(
+        $this->add([
+            'name'       => 'submit',
+            'attributes' => [
                 'value' => 'Submit',
                 'type'  => 'submit'
-            ),
-        ));
+            ],
+        ]);
     }
 
     /**

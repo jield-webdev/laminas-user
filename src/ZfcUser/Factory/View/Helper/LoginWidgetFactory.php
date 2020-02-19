@@ -1,4 +1,5 @@
 <?php
+
 namespace ZfcUser\Factory\View\Helper;
 
 use Zend\ServiceManager\FactoryInterface;
@@ -19,17 +20,16 @@ class LoginWidgetFactory implements FactoryInterface
         $serviceManager = $pluginManager->getServiceLocator();
 
         /* @var $options Options\ModuleOptions */
-        $options = $serviceManager->get('zfcuser_module_options');
+        $options      = $serviceManager->get('zfcuser_module_options');
         $viewTemplate = $options->getUserLoginWidgetViewTemplate();
 
         /* @var $loginForm Form\Login */
         $loginForm = $serviceManager->get('zfcuser_login_form');
 
-        $viewHelper = new ZfcUserLoginWidget;
+        $viewHelper = new ZfcUserLoginWidget();
         $viewHelper
             ->setViewTemplate($viewTemplate)
-            ->setLoginForm($loginForm)
-        ;
+            ->setLoginForm($loginForm);
 
         return $viewHelper;
     }

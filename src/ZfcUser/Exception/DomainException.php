@@ -2,6 +2,8 @@
 
 namespace ZfcUser\Exception;
 
-class DomainException extends \RuntimeException implements ExceptionInterface
+use RuntimeException;
+
+class DomainException extends RuntimeException implements ExceptionInterface
 {
 }

@@ -2,8 +2,8 @@
 
 namespace ZfcUser\Controller\Plugin;
 
-use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
 use Laminas\Authentication\AuthenticationService;
+use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
 use Laminas\ServiceManager\ServiceLocatorInterface;
 use ZfcUser\Authentication\Adapter\AdapterChain as AuthAdapter;
 
@@ -35,6 +35,27 @@ class ZfcUserAuthentication extends AbstractPlugin
     }
 
     /**
+     * Get authService.
+     *
+     * @return AuthenticationService
+     */
+    public function getAuthService()
+    {
+        return $this->authService;
+    }
+
+    /**
+     * Set authService.
+     *
+     * @param AuthenticationService $authService
+     */
+    public function setAuthService(AuthenticationService $authService)
+    {
+        $this->authService = $authService;
+        return $this;
+    }
+
+    /**
      * Proxy convenience method
      *
      * @return mixed
@@ -62,27 +83,6 @@ class ZfcUserAuthentication extends AbstractPlugin
     public function setAuthAdapter(AuthAdapter $authAdapter)
     {
         $this->authAdapter = $authAdapter;
-        return $this;
-    }
-
-    /**
-     * Get authService.
-     *
-     * @return AuthenticationService
-     */
-    public function getAuthService()
-    {
-        return $this->authService;
-    }
-
-    /**
-     * Set authService.
-     *
-     * @param AuthenticationService $authService
-     */
-    public function setAuthService(AuthenticationService $authService)
-    {
-        $this->authService = $authService;
         return $this;
     }
 }

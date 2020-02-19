@@ -1,4 +1,5 @@
 <?php
+
 namespace ZfcUser\Factory\Form;
 
 use Zend\ServiceManager\FactoryInterface;

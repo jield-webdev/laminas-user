@@ -1,12 +1,13 @@
 <?php
+
 namespace ZfcUser\Factory\Form;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use ZfcUser\Form\Register;
 use ZfcUser\Form\RegisterFilter;
-use ZfcUser\Validator\NoRecordExists;
 use ZfcUser\Options;
+use ZfcUser\Validator\NoRecordExists;
 
 class RegisterFormFactory implements FactoryInterface
 {
@@ -20,15 +21,15 @@ class RegisterFormFactory implements FactoryInterface
 
         $userMapper = $serviceManager->get('zfcuser_user_mapper');
 
-        $emailValidator = new NoRecordExists(array(
+        $emailValidator = new NoRecordExists([
             'mapper' => $userMapper,
-            'key' => 'email',
-        ));
+            'key'    => 'email',
+        ]);
 
-        $userNameValidator = new NoRecordExists(array(
+        $userNameValidator = new NoRecordExists([
             'mapper' => $userMapper,
-            'key' => 'username',
-        ));
+            'key'    => 'username',
+        ]);
 
         $inputFilter = new RegisterFilter(
             $emailValidator,

@@ -1,4 +1,5 @@
 <?php
+
 namespace ZfcBase\Db\Adapter;
 
 use Laminas\Db\Adapter\Adapter;
@@ -13,6 +14,7 @@ class MasterSlaveAdapter extends Adapter implements MasterSlaveAdapterInterface
      * @var Adapter
      */
     protected $slaveAdapter;
+
     /**
      * @param Adapter $slaveAdapter
      * @param Driver\DriverInterface|array $driver
@@ -24,10 +26,12 @@ class MasterSlaveAdapter extends Adapter implements MasterSlaveAdapterInterface
         $driver,
         Platform\PlatformInterface $platform = null,
         ResultSet\ResultSetInterface $queryResultPrototype = null
-    ) {
+    )
+    {
         $this->slaveAdapter = $slaveAdapter;
         parent::__construct($driver, $platform, $queryResultPrototype);
     }
+
     /**
      * get slave adapter
      *

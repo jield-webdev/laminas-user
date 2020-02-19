@@ -1,4 +1,5 @@
 <?php
+
 namespace ZfcUser\Factory\View\Helper;
 
 use Zend\Authentication\AuthenticationService;
@@ -20,7 +21,7 @@ class DisplayNameFactory implements FactoryInterface
         /* @var $authService AuthenticationService */
         $authService = $serviceManager->get('zfcuser_auth_service');
 
-        $viewHelper = new ZfcUserDisplayName;
+        $viewHelper = new ZfcUserDisplayName();
         $viewHelper->setAuthService($authService);
 
         return $viewHelper;

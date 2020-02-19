@@ -1,4 +1,5 @@
 <?php
+
 namespace ZfcUser\Factory\Controller\Plugin;
 
 use Zend\Authentication\AuthenticationService;
@@ -24,11 +25,10 @@ class ZfcUserAuthenticationFactory implements FactoryInterface
         /* @var $authAdapter Adapter\AdapterChain */
         $authAdapter = $serviceManager->get('ZfcUser\Authentication\Adapter\AdapterChain');
 
-        $controllerPlugin = new ZfcUserAuthentication;
+        $controllerPlugin = new ZfcUserAuthentication();
         $controllerPlugin
             ->setAuthService($authService)
-            ->setAuthAdapter($authAdapter)
-        ;
+            ->setAuthAdapter($authAdapter);
 
         return $controllerPlugin;
     }

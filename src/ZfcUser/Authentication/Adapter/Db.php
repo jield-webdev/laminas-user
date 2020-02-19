@@ -4,12 +4,10 @@ namespace ZfcUser\Authentication\Adapter;
 
 use Interop\Container\ContainerInterface;
 use Laminas\Authentication\Result as AuthenticationResult;
-use Laminas\EventManager\EventInterface;
-use Laminas\ServiceManager\ServiceManager;
 use Laminas\Crypt\Password\Bcrypt;
+use Laminas\ServiceManager\ServiceManager;
 use Laminas\Session\Container as SessionContainer;
 use ZfcUser\Entity\UserInterface;
-use ZfcUser\Mapper\UserInterface as UserMapperInterface;
 use ZfcUser\Options\ModuleOptions;
 
 class Db extends AbstractAdapter
@@ -52,8 +50,8 @@ class Db extends AbstractAdapter
         if ($this->isSatisfied()) {
             $storage = $this->getStorage()->read();
             $event->setIdentity($storage['identity'])
-                  ->setCode(AuthenticationResult::SUCCESS)
-                  ->setMessages(array('Authentication successful.'));
+                ->setCode(AuthenticationResult::SUCCESS)
+                ->setMessages(['Authentication successful.']);
             return;
         }
 
@@ -79,7 +77,7 @@ class Db extends AbstractAdapter
 
         if (!$userObject) {
             $event->setCode(AuthenticationResult::FAILURE_IDENTITY_NOT_FOUND)
-                  ->setMessages(array('A record with the supplied identity could not be found.'));
+                ->setMessages(['A record with the supplied identity could not be found.']);
             $this->setSatisfied(false);
             return false;
         }
@@ -88,7 +86,7 @@ class Db extends AbstractAdapter
             // Don't allow user to login if state is not in allowed list
             if (!in_array($userObject->getState(), $this->getOptions()->getAllowedLoginStates())) {
                 $event->setCode(AuthenticationResult::FAILURE_UNCATEGORIZED)
-                      ->setMessages(array('A record with the supplied identity is not active.'));
+                    ->setMessages(['A record with the supplied identity is not active.']);
                 $this->setSatisfied(false);
                 return false;
             }
@@ -98,7 +96,7 @@ class Db extends AbstractAdapter
         if (!$cryptoService->verify($credential, $userObject->getPassword())) {
             // Password does not match
             $event->setCode(AuthenticationResult::FAILURE_CREDENTIAL_INVALID)
-                  ->setMessages(array('Supplied credential is invalid.'));
+                ->setMessages(['Supplied credential is invalid.']);
             $this->setSatisfied(false);
             return false;
         } elseif ($cryptoService instanceof Bcrypt) {
@@ -113,21 +111,11 @@ class Db extends AbstractAdapter
         $event->setIdentity($userObject->getId());
 
         $this->setSatisfied(true);
-        $storage = $this->getStorage()->read();
+        $storage             = $this->getStorage()->read();
         $storage['identity'] = $event->getIdentity();
         $this->getStorage()->write($storage);
         $event->setCode(AuthenticationResult::SUCCESS)
-              ->setMessages(array('Authentication successful.'));
-    }
-
-    protected function updateUserPasswordHash(UserInterface $userObject, $password, Bcrypt $bcrypt)
-    {
-        $hash = explode('$', $user->getPassword());
-        if ($hash[2] === $bcrypt->getCost()) {
-            return;
-        }
-        $user = $this->getHydrator()->hydrate(compact('password'), $user);
-        $this->getMapper()->update($user);
+            ->setMessages(['Authentication successful.']);
     }
 
     public function preProcessCredential($credential)
@@ -137,6 +125,46 @@ class Db extends AbstractAdapter
         }
 
         return $credential;
+    }
+
+    /**
+     * @return ModuleOptions
+     */
+    public function getOptions()
+    {
+        if ($this->options === null) {
+            $this->setOptions($this->getServiceManager()->get('zfcuser_module_options'));
+        }
+
+        return $this->options;
+    }
+
+    /**
+     * @param ModuleOptions $options
+     */
+    public function setOptions(ModuleOptions $options)
+    {
+        $this->options = $options;
+    }
+
+    /**
+     * Retrieve service manager instance
+     *
+     * @return ServiceManager
+     */
+    public function getServiceManager()
+    {
+        return $this->serviceManager;
+    }
+
+    /**
+     * Set service manager instance
+     *
+     * @param ContainerInterface $serviceManager
+     */
+    public function setServiceManager(ContainerInterface $serviceManager)
+    {
+        $this->serviceManager = $serviceManager;
     }
 
     /**
@@ -189,6 +217,16 @@ class Db extends AbstractAdapter
         $this->hydrator = $hydrator;
     }
 
+    protected function updateUserPasswordHash(UserInterface $userObject, $password, Bcrypt $bcrypt)
+    {
+        $hash = explode('$', $user->getPassword());
+        if ($hash[2] === $bcrypt->getCost()) {
+            return;
+        }
+        $user = $this->getHydrator()->hydrate(compact('password'), $user);
+        $this->getMapper()->update($user);
+    }
+
     /**
      * Get credentialPreprocessor.
      *
@@ -215,45 +253,5 @@ class Db extends AbstractAdapter
             throw new InvalidArgumentException($message);
         }
         $this->credentialPreprocessor = $credentialPreprocessor;
-    }
-
-    /**
-     * Retrieve service manager instance
-     *
-     * @return ServiceManager
-     */
-    public function getServiceManager()
-    {
-        return $this->serviceManager;
-    }
-
-    /**
-     * Set service manager instance
-     *
-     * @param ContainerInterface $serviceManager
-     */
-    public function setServiceManager(ContainerInterface $serviceManager)
-    {
-        $this->serviceManager = $serviceManager;
-    }
-
-    /**
-     * @param ModuleOptions $options
-     */
-    public function setOptions(ModuleOptions $options)
-    {
-        $this->options = $options;
-    }
-
-    /**
-     * @return ModuleOptions
-     */
-    public function getOptions()
-    {
-        if ($this->options === null) {
-            $this->setOptions($this->getServiceManager()->get('zfcuser_module_options'));
-        }
-
-        return $this->options;
     }
 }

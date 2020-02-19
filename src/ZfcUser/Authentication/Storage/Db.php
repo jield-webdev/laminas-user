@@ -3,6 +3,7 @@
 namespace ZfcUser\Authentication\Storage;
 
 use Interop\Container\ContainerInterface;
+use Laminas\Authentication\Exception\InvalidArgumentException;
 use Laminas\Authentication\Storage;
 use Laminas\Authentication\Storage\StorageInterface;
 use Laminas\ServiceManager\ServiceManager;
@@ -33,9 +34,9 @@ class Db implements Storage\StorageInterface
     /**
      * Returns true if and only if storage is empty
      *
-     * @throws \Laminas\Authentication\Exception\InvalidArgumentException If it is impossible to determine whether
+     * @return bool
+     * @throws InvalidArgumentException If it is impossible to determine whether
      * storage is empty or not
-     * @return boolean
      */
     public function isEmpty()
     {
@@ -52,12 +53,50 @@ class Db implements Storage\StorageInterface
     }
 
     /**
+     * getStorage
+     *
+     * @return Storage\StorageInterface
+     */
+    public function getStorage()
+    {
+        if (null === $this->storage) {
+            $this->setStorage(new Storage\Session());
+        }
+        return $this->storage;
+    }
+
+    /**
+     * setStorage
+     *
+     * @param Storage\StorageInterface $storage
+     * @access public
+     * @return Db
+     */
+    public function setStorage(Storage\StorageInterface $storage)
+    {
+        $this->storage = $storage;
+        return $this;
+    }
+
+    /**
+     * Clears contents from storage
+     *
+     * @return void
+     * @throws InvalidArgumentException If clearing contents from storage is impossible
+     */
+    public function clear()
+    {
+        $this->resolvedIdentity = null;
+        $this->getStorage()->clear();
+    }
+
+    /**
      * Returns the contents of storage
      *
      * Behavior is undefined when storage is empty.
      *
-     * @throws \Laminas\Authentication\Exception\InvalidArgumentException If reading contents from storage is impossible
      * @return mixed
+     * @throws InvalidArgumentException If reading contents from storage is impossible
      */
     public function read()
     {
@@ -78,57 +117,6 @@ class Db implements Storage\StorageInterface
         }
 
         return $this->resolvedIdentity;
-    }
-
-    /**
-     * Writes $contents to storage
-     *
-     * @param  mixed $contents
-     * @throws \Laminas\Authentication\Exception\InvalidArgumentException If writing $contents to storage is impossible
-     * @return void
-     */
-    public function write($contents)
-    {
-        $this->resolvedIdentity = null;
-        $this->getStorage()->write($contents);
-    }
-
-    /**
-     * Clears contents from storage
-     *
-     * @throws \Laminas\Authentication\Exception\InvalidArgumentException If clearing contents from storage is impossible
-     * @return void
-     */
-    public function clear()
-    {
-        $this->resolvedIdentity = null;
-        $this->getStorage()->clear();
-    }
-
-    /**
-     * getStorage
-     *
-     * @return Storage\StorageInterface
-     */
-    public function getStorage()
-    {
-        if (null === $this->storage) {
-            $this->setStorage(new Storage\Session);
-        }
-        return $this->storage;
-    }
-
-    /**
-     * setStorage
-     *
-     * @param Storage\StorageInterface $storage
-     * @access public
-     * @return Db
-     */
-    public function setStorage(Storage\StorageInterface $storage)
-    {
-        $this->storage = $storage;
-        return $this;
     }
 
     /**
@@ -175,5 +163,18 @@ class Db implements Storage\StorageInterface
     public function setServiceManager(ContainerInterface $serviceManager)
     {
         $this->serviceManager = $serviceManager;
+    }
+
+    /**
+     * Writes $contents to storage
+     *
+     * @param mixed $contents
+     * @return void
+     * @throws InvalidArgumentException If writing $contents to storage is impossible
+     */
+    public function write($contents)
+    {
+        $this->resolvedIdentity = null;
+        $this->getStorage()->write($contents);
     }
 }

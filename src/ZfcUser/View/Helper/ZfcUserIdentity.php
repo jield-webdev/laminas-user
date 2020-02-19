@@ -2,8 +2,9 @@
 
 namespace ZfcUser\View\Helper;
 
-use Laminas\View\Helper\AbstractHelper;
 use Laminas\Authentication\AuthenticationService;
+use Laminas\View\Helper\AbstractHelper;
+use ZfcUser\Entity\UserInterface;
 
 class ZfcUserIdentity extends AbstractHelper
 {
@@ -16,7 +17,7 @@ class ZfcUserIdentity extends AbstractHelper
      * __invoke
      *
      * @access public
-     * @return \ZfcUser\Entity\UserInterface
+     * @return UserInterface
      */
     public function __invoke()
     {
@@ -41,7 +42,7 @@ class ZfcUserIdentity extends AbstractHelper
      * Set authService.
      *
      * @param AuthenticationService $authService
-     * @return \ZfcUser\View\Helper\ZfcUserIdentity
+     * @return ZfcUserIdentity
      */
     public function setAuthService(AuthenticationService $authService)
     {

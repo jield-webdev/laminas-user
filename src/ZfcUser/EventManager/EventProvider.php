@@ -1,11 +1,11 @@
 <?php
+
 namespace ZfcUser\EventManager;
 
-use Traversable;
+use Laminas\EventManager\EventManager;
 use Laminas\EventManager\EventManagerAwareInterface;
 use Laminas\EventManager\EventManagerInterface;
-use Laminas\EventManager\EventManager;
-use Laminas\EventManager\SharedEventManager;
+use Traversable;
 
 abstract class EventProvider implements EventManagerAwareInterface
 {
@@ -13,30 +13,7 @@ abstract class EventProvider implements EventManagerAwareInterface
      * @var EventManagerInterface
      */
     protected $events;
-    /**
-     * Set the event manager instance used by this context
-     *
-     * @param  EventManagerInterface $events
-     * @return mixed
-     */
-    public function setEventManager(EventManagerInterface $events)
-    {
-        $identifiers = array(__CLASS__, get_called_class());
-        if (isset($this->eventIdentifier)) {
-            if ((is_string($this->eventIdentifier))
-                || (is_array($this->eventIdentifier))
-                || ($this->eventIdentifier instanceof Traversable)
-            ) {
-                $identifiers = array_unique(array_merge($identifiers, (array) $this->eventIdentifier));
-            } elseif (is_object($this->eventIdentifier)) {
-                $identifiers[] = $this->eventIdentifier;
-            }
-            // silently ignore invalid eventIdentifier types
-        }
-        $events->setIdentifiers($identifiers);
-        $this->events = $events;
-        return $this;
-    }
+
     /**
      * Retrieve the event manager
      *
@@ -50,5 +27,30 @@ abstract class EventProvider implements EventManagerAwareInterface
             $this->setEventManager(new EventManager());
         }
         return $this->events;
+    }
+
+    /**
+     * Set the event manager instance used by this context
+     *
+     * @param EventManagerInterface $events
+     * @return mixed
+     */
+    public function setEventManager(EventManagerInterface $events)
+    {
+        $identifiers = [__CLASS__, get_called_class()];
+        if (isset($this->eventIdentifier)) {
+            if ((is_string($this->eventIdentifier))
+                || (is_array($this->eventIdentifier))
+                || ($this->eventIdentifier instanceof Traversable)
+            ) {
+                $identifiers = array_unique(array_merge($identifiers, (array)$this->eventIdentifier));
+            } elseif (is_object($this->eventIdentifier)) {
+                $identifiers[] = $this->eventIdentifier;
+            }
+            // silently ignore invalid eventIdentifier types
+        }
+        $events->setIdentifiers($identifiers);
+        $this->events = $events;
+        return $this;
     }
 }

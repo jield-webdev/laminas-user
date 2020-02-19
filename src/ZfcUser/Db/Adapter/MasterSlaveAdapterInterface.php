@@ -1,10 +1,13 @@
 <?php
+
 namespace ZfcUser\Db\Adapter;
+
+use Laminas\Db\Adapter\Adapter;
 
 interface MasterSlaveAdapterInterface
 {
     /**
-     * @return \Laminas\Db\Adapter\Adapter
+     * @return Adapter
      */
     public function getSlaveAdapter();
 }

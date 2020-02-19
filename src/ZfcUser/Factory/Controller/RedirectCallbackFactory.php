@@ -12,6 +12,17 @@ use ZfcUser\Options\ModuleOptions;
 
 class RedirectCallbackFactory implements FactoryInterface
 {
+    /**
+     * Create service
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return mixed
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        return $this->__invoke($serviceLocator, null);
+    }
+
     public function __invoke(ContainerInterface $serviceLocator, $requestedName, array $options = null)
     {
         /* @var RouteInterface $router */
@@ -24,16 +35,5 @@ class RedirectCallbackFactory implements FactoryInterface
         $options = $serviceLocator->get('zfcuser_module_options');
 
         return new RedirectCallback($application, $router, $options);
-    }
-
-    /**
-     * Create service
-     *
-     * @param ServiceLocatorInterface $serviceLocator
-     * @return mixed
-     */
-    public function createService(ServiceLocatorInterface $serviceLocator)
-    {
-        return $this->__invoke($serviceLocator, null);
     }
 }

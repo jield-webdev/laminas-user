@@ -5,7 +5,6 @@ namespace ZfcUser\Authentication\Adapter;
 use Laminas\Authentication\Adapter\AdapterInterface;
 use Laminas\Authentication\Result as AuthenticationResult;
 use Laminas\EventManager\Event;
-use Laminas\EventManager\EventInterface;
 use Laminas\EventManager\EventManagerAwareTrait;
 use Laminas\Stdlib\RequestInterface as Request;
 use Laminas\Stdlib\ResponseInterface as Response;
@@ -41,9 +40,66 @@ class AdapterChain implements AdapterInterface
     }
 
     /**
+     * Get the auth event
+     *
+     * @return AdapterChainEvent
+     */
+    public function getEvent()
+    {
+        if (null === $this->event) {
+            $this->setEvent(new AdapterChainEvent());
+            $this->event->setTarget($this);
+        }
+
+        return $this->event;
+    }
+
+    /**
+     * Set an event to use during dispatch
+     *
+     * By default, will re-cast to AdapterChainEvent if another event type is provided.
+     *
+     * @param Event $e
+     * @return AdapterChain
+     */
+    public function setEvent(Event $e)
+    {
+        if (!$e instanceof AdapterChainEvent) {
+            $eventParams = $e->getParams();
+            $e           = new AdapterChainEvent();
+            $e->setParams($eventParams);
+        }
+
+        $this->event = $e;
+
+        return $this;
+    }
+
+    /**
+     * resetAdapters
+     *
+     * @return AdapterChain
+     */
+    public function resetAdapters()
+    {
+        $sharedManager = $this->getEventManager()->getSharedManager();
+
+        if ($sharedManager) {
+            $listeners = $sharedManager->getListeners(['authenticate'], 'authenticate');
+            foreach ($listeners as $listener) {
+                if (is_array($listener) && $listener[0] instanceof ChainableAdapter) {
+                    $listener[0]->getStorage()->clear();
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * prepareForAuthentication
      *
-     * @param  Request $request
+     * @param Request $request
      * @return Response|bool
      * @throws Exception\AuthenticationEventException
      */
@@ -86,27 +142,6 @@ class AdapterChain implements AdapterInterface
     }
 
     /**
-     * resetAdapters
-     *
-     * @return AdapterChain
-     */
-    public function resetAdapters()
-    {
-        $sharedManager = $this->getEventManager()->getSharedManager();
-
-        if ($sharedManager) {
-            $listeners = $sharedManager->getListeners(['authenticate'], 'authenticate');
-            foreach ($listeners as $listener) {
-                if (is_array($listener) && $listener[0] instanceof ChainableAdapter) {
-                    $listener[0]->getStorage()->clear();
-                }
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * logoutAdapters
      *
      * @return AdapterChain
@@ -117,41 +152,5 @@ class AdapterChain implements AdapterInterface
         $e = $this->getEvent();
         $e->setName('logout');
         $this->getEventManager()->triggerEvent($e);
-    }
-
-    /**
-     * Get the auth event
-     *
-     * @return AdapterChainEvent
-     */
-    public function getEvent()
-    {
-        if (null === $this->event) {
-            $this->setEvent(new AdapterChainEvent);
-            $this->event->setTarget($this);
-        }
-
-        return $this->event;
-    }
-
-    /**
-     * Set an event to use during dispatch
-     *
-     * By default, will re-cast to AdapterChainEvent if another event type is provided.
-     *
-     * @param  Event $e
-     * @return AdapterChain
-     */
-    public function setEvent(Event $e)
-    {
-        if (!$e instanceof AdapterChainEvent) {
-            $eventParams = $e->getParams();
-            $e = new AdapterChainEvent();
-            $e->setParams($eventParams);
-        }
-
-        $this->event = $e;
-
-        return $this;
     }
 }

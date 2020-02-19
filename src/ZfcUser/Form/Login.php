@@ -18,36 +18,36 @@ class Login extends ProvidesEventsForm
 
         parent::__construct($name);
 
-        $this->add(array(
-            'name' => 'identity',
-            'options' => array(
+        $this->add([
+            'name'       => 'identity',
+            'options'    => [
                 'label' => '',
-            ),
-            'attributes' => array(
-                'id' => 'identity',
+            ],
+            'attributes' => [
+                'id'   => 'identity',
                 'type' => 'text',
-            ),
-        ));
+            ],
+        ]);
 
         $emailElement = $this->get('identity');
-        $label = $emailElement->getLabel('label');
+        $label        = $emailElement->getLabel('label');
         // @TODO: make translation-friendly
         foreach ($this->getAuthenticationOptions()->getAuthIdentityFields() as $mode) {
             $label = (!empty($label) ? $label . ' or ' : '') . ucfirst($mode);
         }
         $emailElement->setLabel($label);
         //
-        $this->add(array(
-            'name' => 'credential',
-            'type' => 'password',
-            'options' => array(
+        $this->add([
+            'name'       => 'credential',
+            'type'       => 'password',
+            'options'    => [
                 'label' => 'Password',
-            ),
-            'attributes' => array(
-                'id' => 'credential',
+            ],
+            'attributes' => [
+                'id'   => 'credential',
                 'type' => 'password',
-            ),
-        ));
+            ],
+        ]);
 
         // @todo: Fix this
         // 1) getValidator() is a protected method
@@ -61,13 +61,13 @@ class Login extends ProvidesEventsForm
         $submitElement = new Element\Button('submit');
         $submitElement
             ->setLabel('Sign In')
-            ->setAttributes(array(
-                'type'  => 'submit',
-            ));
+            ->setAttributes([
+                'type' => 'submit',
+            ]);
 
-        $this->add($submitElement, array(
+        $this->add($submitElement, [
             'priority' => -100,
-        ));
+        ]);
     }
 
     /**

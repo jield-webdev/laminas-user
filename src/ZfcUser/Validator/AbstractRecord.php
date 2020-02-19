@@ -2,6 +2,7 @@
 
 namespace ZfcUser\Validator;
 
+use Exception;
 use Laminas\Validator\AbstractValidator;
 use ZfcUser\Mapper\UserInterface;
 
@@ -11,15 +12,15 @@ abstract class AbstractRecord extends AbstractValidator
      * Error constants
      */
     const ERROR_NO_RECORD_FOUND = 'noRecordFound';
-    const ERROR_RECORD_FOUND    = 'recordFound';
+    public const ERROR_RECORD_FOUND = 'recordFound';
 
     /**
      * @var array Message templates
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::ERROR_NO_RECORD_FOUND => "No record matching the input was found",
         self::ERROR_RECORD_FOUND    => "A record matching the input was found",
-    );
+    ];
 
     /**
      * @var UserInterface
@@ -47,25 +48,30 @@ abstract class AbstractRecord extends AbstractValidator
     }
 
     /**
-     * getMapper
+     * Grab the user from the mapper
      *
-     * @return UserInterface
+     * @param string $value
+     * @return mixed
      */
-    public function getMapper()
+    protected function query($value)
     {
-        return $this->mapper;
-    }
+        $result = false;
 
-    /**
-     * setMapper
-     *
-     * @param UserInterface $mapper
-     * @return AbstractRecord
-     */
-    public function setMapper(UserInterface $mapper)
-    {
-        $this->mapper = $mapper;
-        return $this;
+        switch ($this->getKey()) {
+            case 'email':
+                $result = $this->getMapper()->findByEmail($value);
+                break;
+
+            case 'username':
+                $result = $this->getMapper()->findByUsername($value);
+                break;
+
+            default:
+                throw new Exception('Invalid key used in ZfcUser validator');
+                break;
+        }
+
+        return $result;
     }
 
     /**
@@ -90,29 +96,24 @@ abstract class AbstractRecord extends AbstractValidator
     }
 
     /**
-     * Grab the user from the mapper
+     * getMapper
      *
-     * @param string $value
-     * @return mixed
+     * @return UserInterface
      */
-    protected function query($value)
+    public function getMapper()
     {
-        $result = false;
+        return $this->mapper;
+    }
 
-        switch ($this->getKey()) {
-            case 'email':
-                $result = $this->getMapper()->findByEmail($value);
-                break;
-
-            case 'username':
-                $result = $this->getMapper()->findByUsername($value);
-                break;
-
-            default:
-                throw new \Exception('Invalid key used in ZfcUser validator');
-                break;
-        }
-
-        return $result;
+    /**
+     * setMapper
+     *
+     * @param UserInterface $mapper
+     * @return AbstractRecord
+     */
+    public function setMapper(UserInterface $mapper)
+    {
+        $this->mapper = $mapper;
+        return $this;
     }
 }
