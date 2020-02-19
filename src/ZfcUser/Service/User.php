@@ -2,16 +2,17 @@
 
 namespace ZfcUser\Service;
 
-use Zend\Authentication\AuthenticationServiceInterface as AuthenticationService;
-use Zend\Form\FormInterface as Form;
-use Zend\ServiceManager\ServiceManager;
-use Zend\ServiceManager\ServiceManagerAwareInterface;
-use ZfcBase\EventManager\EventProvider;
-use ZfcUser\Mapper\HydratorInterface as Hydrator;
-use ZfcUser\Mapper\UserInterface as UserMapper;
-use ZfcUser\Options\UserServiceOptionsInterface as ServiceOptions;
+use Interop\Container\ContainerInterface;
+use Laminas\Authentication\AuthenticationService;
+use Laminas\Form\Form;
+use Laminas\ServiceManager\ServiceManager;
+use Laminas\Crypt\Password\Bcrypt;
+use Laminas\Hydrator;
+use ZfcUser\EventManager\EventProvider;
+use ZfcUser\Mapper\UserInterface as UserMapperInterface;
+use ZfcUser\Options\UserServiceOptionsInterface;
 
-class User extends EventProvider implements ServiceManagerAwareInterface
+class User extends EventProvider
 {
     /**
      * @var UserMapper
@@ -63,12 +64,68 @@ class User extends EventProvider implements ServiceManagerAwareInterface
         $form->setHydrator($this->getFormHydrator());
         $form->bind(new $entityClass);
         $form->setData($data);
+        if (!$form->isValid()) {
+            return false;
+        }
+
+        $user = $form->getData();
+        /* @var $user \ZfcUser\Entity\UserInterface */
+
+        $bcrypt = new Bcrypt;
+        $bcrypt->setCost($this->getOptions()->getPasswordCost());
+        $user->setPassword($bcrypt->create($user->getPassword()));
+
+        if ($this->getOptions()->getEnableUsername()) {
+            $user->setUsername($data['username']);
+        }
+        if ($this->getOptions()->getEnableDisplayName()) {
+            $user->setDisplayName($data['display_name']);
+        }
+
+        // If user state is enabled, set the default state value
+        if ($this->getOptions()->getEnableUserState()) {
+            $user->setState($this->getOptions()->getDefaultUserState());
+        }
+        $this->getEventManager()->trigger(__FUNCTION__, $this, array('user' => $user, 'form' => $form));
+        $this->getUserMapper()->insert($user);
+        $this->getEventManager()->trigger(__FUNCTION__.'.post', $this, array('user' => $user, 'form' => $form));
+        return $user;
+    }
+
+    /**
+     * change the current users password
+     *
+     * @param array $data
+     * @return boolean
+     */
+    public function changePassword(array $data)
+    {
+        $currentUser = $this->getAuthService()->getIdentity();
+
+        $oldPass = $data['credential'];
+        $newPass = $data['newCredential'];
 
         if ($form->isValid()) {
             $user   = $form->getData();
             $events = $this->getEventManager();
 
-            $user->setPassword($this->getFormHydrator()->getCryptoService()->create($user->getPassword()));
+        if (!$bcrypt->verify($oldPass, $currentUser->getPassword())) {
+            return false;
+        }
+
+        $pass = $bcrypt->create($newPass);
+        $currentUser->setPassword($pass);
+
+        $this->getEventManager()->trigger(__FUNCTION__, $this, array('user' => $currentUser, 'data' => $data));
+        $this->getUserMapper()->update($currentUser);
+        $this->getEventManager()->trigger(__FUNCTION__.'.post', $this, array('user' => $currentUser, 'data' => $data));
+
+        return true;
+    }
+
+    public function changeEmail(array $data)
+    {
+        $currentUser = $this->getAuthService()->getIdentity();
 
             $events->trigger(__FUNCTION__, $this, compact('user', 'form'));
             $this->getUserMapper()->insert($user);
@@ -76,7 +133,14 @@ class User extends EventProvider implements ServiceManagerAwareInterface
 
             return $user;
         }
-        return false;
+
+        $currentUser->setEmail($data['newIdentity']);
+
+        $this->getEventManager()->trigger(__FUNCTION__, $this, array('user' => $currentUser, 'data' => $data));
+        $this->getUserMapper()->update($currentUser);
+        $this->getEventManager()->trigger(__FUNCTION__.'.post', $this, array('user' => $currentUser, 'data' => $data));
+
+        return true;
     }
 
     /**
@@ -186,10 +250,10 @@ class User extends EventProvider implements ServiceManagerAwareInterface
     /**
      * Set service manager instance
      *
-     * @param ServiceManager $serviceManager
+     * @param ContainerInterface $serviceManager
      * @return User
      */
-    public function setServiceManager(ServiceManager $serviceManager)
+    public function setServiceManager(ContainerInterface $serviceManager)
     {
         $this->serviceManager = $serviceManager;
         return $this;
@@ -198,7 +262,7 @@ class User extends EventProvider implements ServiceManagerAwareInterface
     /**
      * Return the Form Hydrator
      *
-     * @return Hydrator
+     * @return \Laminas\Hydrator\ClassMethods
      */
     public function getFormHydrator()
     {

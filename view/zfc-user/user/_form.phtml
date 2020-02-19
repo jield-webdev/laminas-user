@@ -1,0 +1,8 @@
+<?php echo $this->form()->openTag($form) ?>
+<?php foreach ($this->form as $element) : ?>
+<?php echo $this->formRow($element) ?>
+<?php endforeach ?>
+<?php if ($this->redirect) : ?>
+  <input type="hidden" name="redirect" value="<?php echo $this->redirect ?>">
+<?php endif ?>
+<?php echo $this->form()->closeTag() ?>

@@ -1,8 +1,9 @@
 <?php
 namespace ZfcUserTest\Factory\Form;
 
-use Zend\ServiceManager\ServiceManager;
-use ZfcUser\Factory\Form\LoginFormFactory;
+use Laminas\Form\FormElementManager;
+use Laminas\ServiceManager\ServiceManager;
+use ZfcUser\Factory\Form\Login as LoginFactory;
 use ZfcUser\Options\ModuleOptions;
 
 class LoginFormFactoryTest extends \PHPUnit_Framework_TestCase
@@ -12,8 +13,11 @@ class LoginFormFactoryTest extends \PHPUnit_Framework_TestCase
         $serviceManager = new ServiceManager;
         $serviceManager->setService('zfcuser_module_options', new ModuleOptions);
 
-        $factory = new LoginFormFactory;
+        $formElementManager = new FormElementManager($serviceManager);
+        $serviceManager->setService('FormElementManager', $formElementManager);
 
-        $this->assertInstanceOf('ZfcUser\Form\Login', $factory->createService($serviceManager));
+        $factory = new LoginFactory();
+
+        $this->assertInstanceOf('ZfcUser\Form\Login', $factory->__invoke($serviceManager, 'ZfcUser\Form\Login'));
     }
 }

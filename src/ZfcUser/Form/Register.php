@@ -2,6 +2,7 @@
 
 namespace ZfcUser\Form;
 
+use Laminas\Form\Element\Captcha as Captcha;
 use ZfcUser\Options\RegistrationOptionsInterface;
 
 class Register extends Base
@@ -18,9 +19,21 @@ class Register extends Base
     public function __construct($name, RegistrationOptionsInterface $options)
     {
         $this->setRegistrationOptions($options);
+
         parent::__construct($name);
 
-        $this->remove('id');
+        if ($this->getRegistrationOptions()->getUseRegistrationFormCaptcha()) {
+            $this->add(array(
+                'name' => 'captcha',
+                'type' => 'Laminas\Form\Element\Captcha',
+                'options' => array(
+                    'label' => 'Please type the following text',
+                    'captcha' => $this->getRegistrationOptions()->getFormCaptchaOptions(),
+                ),
+            ));
+        }
+
+        $this->remove('userId');
         if (!$this->getRegistrationOptions()->getEnableUsername()) {
             $this->remove('username');
         }
@@ -28,7 +41,6 @@ class Register extends Base
             $this->remove('display_name');
         }
         $this->get('submit')->setLabel('Register');
-        $this->getEventManager()->trigger('init', $this);
     }
 
     /**

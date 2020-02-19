@@ -2,8 +2,7 @@
 
 namespace ZfcUser\Form;
 
-use Zend\Form\Element;
-use ZfcBase\Form\ProvidesEventsForm;
+use Laminas\Form\Element;
 use ZfcUser\Options\AuthenticationOptionsInterface;
 
 class Login extends ProvidesEventsForm
@@ -16,6 +15,7 @@ class Login extends ProvidesEventsForm
     public function __construct($name, AuthenticationOptionsInterface $options)
     {
         $this->setAuthenticationOptions($options);
+
         parent::__construct($name);
 
         $this->add(array(
@@ -24,7 +24,8 @@ class Login extends ProvidesEventsForm
                 'label' => '',
             ),
             'attributes' => array(
-                'type' => 'text'
+                'id' => 'identity',
+                'type' => 'text',
             ),
         ));
 
@@ -43,6 +44,7 @@ class Login extends ProvidesEventsForm
                 'label' => 'Password',
             ),
             'attributes' => array(
+                'id' => 'credential',
                 'type' => 'password',
             ),
         ));
@@ -66,8 +68,6 @@ class Login extends ProvidesEventsForm
         $this->add($submitElement, array(
             'priority' => -100,
         ));
-
-        $this->getEventManager()->trigger('init', $this);
     }
 
     /**
@@ -79,6 +79,7 @@ class Login extends ProvidesEventsForm
     public function setAuthenticationOptions(AuthenticationOptionsInterface $authOptions)
     {
         $this->authOptions = $authOptions;
+
         return $this;
     }
 

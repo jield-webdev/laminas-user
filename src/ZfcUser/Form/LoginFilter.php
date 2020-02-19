@@ -2,7 +2,7 @@
 
 namespace ZfcUser\Form;
 
-use ZfcBase\InputFilter\ProvidesEventsInputFilter;
+use ZfcUser\InputFilter\ProvidesEventsInputFilter;
 use ZfcUser\Options\AuthenticationOptionsInterface;
 
 class LoginFilter extends ProvidesEventsInputFilter
@@ -38,7 +38,5 @@ class LoginFilter extends ProvidesEventsInputFilter
                 array('name' => 'StringTrim'),
             ),
         ));
-
-        $this->getEventManager()->trigger('init', $this);
     }
 }

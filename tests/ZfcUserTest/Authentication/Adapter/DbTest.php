@@ -2,8 +2,7 @@
 
 namespace ZfcUserTest\Authentication\Adapter;
 
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use PHPUnit_Framework_TestCase as TestCase;
+use Laminas\EventManager\Event;
 use ZfcUser\Authentication\Adapter\Db;
 
 class DbTest extends TestCase
@@ -21,28 +20,28 @@ class DbTest extends TestCase
     /**
      * Mock of AuthEvent.
      *
-     * @var MockObject
+     * @var \ZfcUser\Authentication\Adapter\AdapterChainEvent|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $authEvent;
 
     /**
      * Mock of Storage.
      *
-     * @var MockObject
+     * @var \Laminas\Authentication\Storage\Session|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $storage;
 
     /**
      * Mock of Options.
      *
-     * @var MockObject
+     * @var \ZfcUser\Options\ModuleOptions|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $options;
 
     /**
      * Mock of Mapper.
      *
-     * @var MockObject
+     * @var \ZfcUser\Mapper\UserInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $mapper;
 
@@ -59,7 +58,7 @@ class DbTest extends TestCase
     /**
      * Mock of User.
      *
-     * @var MockObject
+     * @var \ZfcUser\Entity\UserInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $user;
 
@@ -72,56 +71,42 @@ class DbTest extends TestCase
 
     protected function setUp()
     {
-        $this->options   = $this->getMock('ZfcUser\Options\ModuleOptions');
-        $this->mapper    = $this->getMockForAbstractClass(
-            'ZfcUser\Mapper\UserInterface'
-        );
-        $this->user      = $this->getMockForAbstractClass(
-            'ZfcUser\Entity\UserInterface'
-        );
-        $this->storage   = $this->getMockForAbstractClass(
-            'Zend\Authentication\Storage\StorageInterface'
-        );
-        $this->authEvent = $this->getMock(
-            'ZfcUser\Authentication\Adapter\AdapterChainEvent'
-        );
+        $storage = $this->getMock('Laminas\Authentication\Storage\Session');
+        $this->storage = $storage;
 
-        $this->bcrypt    = $this->getMock('Zend\Crypt\Password\Bcrypt');
-        $this->hydrator  = $this->getMockForAbstractClass(
-            'ZfcUser\Mapper\HydratorInterface'
-        );
-        $this->hydrator->expects($this->any())
-            ->method('getCryptoService')
-            ->will($this->returnValue($this->bcrypt));
+        $authEvent = $this->getMock('ZfcUser\Authentication\Adapter\AdapterChainEvent');
+        $this->authEvent = $authEvent;
 
-        $this->services  = $this->getMock('Zend\ServiceManager\ServiceManager');
-        $this->services->expects($this->any())
-            ->method('get')
-            ->will($this->returnValueMap(array(
-                array('zfcuser_module_options', true, $this->options),
-                array('zfcuser_user_mapper', true, $this->mapper),
-                array('zfcuser_user_hydrator', true, $this->hydrator),
-            )));
+        $options = $this->getMock('ZfcUser\Options\ModuleOptions');
+        $this->options = $options;
+
+        $mapper = $this->getMock('ZfcUser\Mapper\UserInterface');
+        $this->mapper = $mapper;
+
+        $user = $this->getMock('ZfcUser\Entity\UserInterface');
+        $this->user = $user;
 
         $this->db = new Db;
         $this->db->setServiceManager($this->services);
         $this->db->setStorage($this->storage);
 
-        $sessionManager = $this->getMock('Zend\Session\SessionManager');
-        \Zend\Session\AbstractContainer::setDefaultManager($sessionManager);
+        $sessionManager = $this->getMock('Laminas\Session\SessionManager');
+        \Laminas\Session\AbstractContainer::setDefaultManager($sessionManager);
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::logout
+     * @covers \ZfcUser\Authentication\Adapter\Db::logout
      */
     public function testLogout()
     {
-        $this->storage->expects($this->once())->method('clear');
-        $this->db->logout($this->authEvent);
+        $this->storage->expects($this->once())
+                      ->method('clear');
+
+         $this->db->logout($this->authEvent);
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::Authenticate
+     * @covers \ZfcUser\Authentication\Adapter\Db::Authenticate
      */
     public function testAuthenticateWhenSatisfies()
     {
@@ -131,7 +116,7 @@ class DbTest extends TestCase
                         ->will($this->returnValue($this->authEvent));
         $this->authEvent->expects($this->once())
                         ->method('setCode')
-                        ->with(\Zend\Authentication\Result::SUCCESS)
+                        ->with(\Laminas\Authentication\Result::SUCCESS)
                         ->will($this->returnValue($this->authEvent));
         $this->authEvent->expects($this->once())
                         ->method('setMessages')
@@ -145,12 +130,14 @@ class DbTest extends TestCase
             ->method('read')
             ->will($this->returnValue(array('identity' => 'ZfcUser')));
 
-        $result = $this->db->authenticate($this->authEvent);
+        $event = new Event(null, $this->authEvent);
+
+        $result = $this->db->authenticate($event);
         $this->assertNull($result);
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::Authenticate
+     * @covers \ZfcUser\Authentication\Adapter\Db::Authenticate
      */
     public function testAuthenticateNoUserObject()
     {
@@ -162,21 +149,24 @@ class DbTest extends TestCase
 
         $this->authEvent->expects($this->once())
             ->method('setCode')
-            ->with(\Zend\Authentication\Result::FAILURE_IDENTITY_NOT_FOUND)
+            ->with(\Laminas\Authentication\Result::FAILURE_IDENTITY_NOT_FOUND)
             ->will($this->returnValue($this->authEvent));
-        $this->authEvent->expects($this->once(1))
+        $this->authEvent->expects($this->once())
             ->method('setMessages')
             ->with(array('A record with the supplied identity could not be found.'))
             ->will($this->returnValue($this->authEvent));
 
-        $result = $this->db->authenticate($this->authEvent);
+        $this->db->setOptions($this->options);
+
+        $event = new Event(null, $this->authEvent);
+        $result = $this->db->authenticate($event);
 
         $this->assertFalse($result);
         $this->assertFalse($this->db->isSatisfied());
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::Authenticate
+     * @covers \ZfcUser\Authentication\Adapter\Db::Authenticate
      */
     public function testAuthenticationUserStateEnabledUserButUserStateNotInArray()
     {
@@ -192,7 +182,7 @@ class DbTest extends TestCase
 
         $this->authEvent->expects($this->once())
             ->method('setCode')
-            ->with(\Zend\Authentication\Result::FAILURE_UNCATEGORIZED)
+            ->with(\Laminas\Authentication\Result::FAILURE_UNCATEGORIZED)
             ->will($this->returnValue($this->authEvent));
         $this->authEvent->expects($this->once())
             ->method('setMessages')
@@ -203,14 +193,18 @@ class DbTest extends TestCase
             ->method('getState')
             ->will($this->returnValue(1));
 
-        $result = $this->db->authenticate($this->authEvent);
+        $this->db->setMapper($this->mapper);
+        $this->db->setOptions($this->options);
+
+        $event = new Event(null, $this->authEvent);
+        $result = $this->db->authenticate($event);
 
         $this->assertFalse($result);
         $this->assertFalse($this->db->isSatisfied());
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::Authenticate
+     * @covers \ZfcUser\Authentication\Adapter\Db::Authenticate
      */
     public function testAuthenticateWithWrongPassword()
     {
@@ -227,20 +221,24 @@ class DbTest extends TestCase
 
         $this->authEvent->expects($this->once())
             ->method('setCode')
-            ->with(\Zend\Authentication\Result::FAILURE_CREDENTIAL_INVALID)
+            ->with(\Laminas\Authentication\Result::FAILURE_CREDENTIAL_INVALID)
             ->will($this->returnValue($this->authEvent));
         $this->authEvent->expects($this->once(1))
             ->method('setMessages')
             ->with(array('Supplied credential is invalid.'));
 
-        $result = $this->db->authenticate($this->authEvent);
+        $this->db->setMapper($this->mapper);
+        $this->db->setOptions($this->options);
+
+        $event = new Event(null, $this->authEvent);
+        $result = $this->db->authenticate($event);
 
         $this->assertFalse($result);
         $this->assertFalse($this->db->isSatisfied());
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::Authenticate
+     * @covers \ZfcUser\Authentication\Adapter\Db::Authenticate
      */
     public function testAuthenticationAuthenticatesWithEmail()
     {
@@ -275,18 +273,22 @@ class DbTest extends TestCase
                         ->will($this->returnValue($this->authEvent));
         $this->authEvent->expects($this->once())
                         ->method('setCode')
-                        ->with(\Zend\Authentication\Result::SUCCESS)
+                        ->with(\Laminas\Authentication\Result::SUCCESS)
                         ->will($this->returnValue($this->authEvent));
         $this->authEvent->expects($this->once())
                         ->method('setMessages')
                         ->with(array('Authentication successful.'))
                         ->will($this->returnValue($this->authEvent));
 
-        $result = $this->db->authenticate($this->authEvent);
+        $this->db->setMapper($this->mapper);
+        $this->db->setOptions($this->options);
+
+        $event = new Event(null, $this->authEvent);
+        $result = $this->db->authenticate($event);
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::Authenticate
+     * @covers \ZfcUser\Authentication\Adapter\Db::Authenticate
      */
     public function testAuthenticationAuthenticates()
     {
@@ -328,18 +330,22 @@ class DbTest extends TestCase
                         ->will($this->returnValue($this->authEvent));
         $this->authEvent->expects($this->once())
                         ->method('setCode')
-                        ->with(\Zend\Authentication\Result::SUCCESS)
+                        ->with(\Laminas\Authentication\Result::SUCCESS)
                         ->will($this->returnValue($this->authEvent));
         $this->authEvent->expects($this->once())
                         ->method('setMessages')
                         ->with(array('Authentication successful.'))
                         ->will($this->returnValue($this->authEvent));
 
-        $result = $this->db->authenticate($this->authEvent);
+        $this->db->setMapper($this->mapper);
+        $this->db->setOptions($this->options);
+
+        $event = new Event(null, $this->authEvent);
+        $result = $this->db->authenticate($event);
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::updateUserPasswordHash
+     * @covers \ZfcUser\Authentication\Adapter\Db::updateUserPasswordHash
      */
     public function testUpdateUserPasswordHashWithSameCost()
     {
@@ -347,7 +353,8 @@ class DbTest extends TestCase
             ->method('getPassword')
             ->will($this->returnValue('$2a$10$x05G2P803MrB3jaORBXBn.QHtiYzGQOBjQ7unpEIge.Mrz6c3KiVm'));
 
-        $this->bcrypt->expects($this->once())
+        $bcrypt = $this->getMock('Laminas\Crypt\Password\Bcrypt');
+        $bcrypt->expects($this->once())
             ->method('getCost')
             ->will($this->returnValue(static::PASSWORD_COST_10));
 
@@ -363,7 +370,7 @@ class DbTest extends TestCase
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::updateUserPasswordHash
+     * @covers \ZfcUser\Authentication\Adapter\Db::updateUserPasswordHash
      */
     public function testUpdateUserPasswordHashWithoutSameCost()
     {
@@ -371,7 +378,8 @@ class DbTest extends TestCase
             ->method('getPassword')
             ->will($this->returnValue('$2a$10$x05G2P803MrB3jaORBXBn.QHtiYzGQOBjQ7unpEIge.Mrz6c3KiVm'));
 
-        $this->bcrypt->expects($this->once())
+        $bcrypt = $this->getMock('Laminas\Crypt\Password\Bcrypt');
+        $bcrypt->expects($this->once())
             ->method('getCost')
             ->will($this->returnValue(static::PASSWORD_COST_04));
 
@@ -393,8 +401,9 @@ class DbTest extends TestCase
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::getCredentialPreprocessor
-     * @covers ZfcUser\Authentication\Adapter\Db::setCredentialPreprocessor
+     * @covers \ZfcUser\Authentication\Adapter\Db::preprocessCredential
+     * @covers \ZfcUser\Authentication\Adapter\Db::setCredentialPreprocessor
+     * @covers \ZfcUser\Authentication\Adapter\Db::getCredentialPreprocessor
      */
     public function testSetValidPreprocessCredential()
     {
@@ -405,58 +414,59 @@ class DbTest extends TestCase
         $this->assertSame($callable, $this->db->getCredentialPreprocessor());
     }
 
-    /**
-     * @covers ZfcUser\Authentication\Adapter\Db::setCredentialPreprocessor
-     * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage Credential Preprocessor must be callable, [boolean] given
-     */
-    public function testSetInvalidPreprocessCredential()
-    {
-        $this->db->setCredentialPreprocessor(false);
+        $this->db->preProcessCredential('ZfcUser');
+        $this->assertTrue($testVar);
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::preprocessCredential
-     * @covers ZfcUser\Authentication\Adapter\Db::setCredentialPreprocessor
-     */
-    public function testPreprocessCredentialWithCallable()
-    {
-        $expected = 'processed';
-        $this->db->setCredentialPreprocessor(function ($credential) use ($expected) {
-            return $expected;
-        });
-        $this->assertSame($expected, $this->db->preprocessCredential('ZfcUser'));
-    }
-
-    /**
-     * @covers ZfcUser\Authentication\Adapter\Db::preprocessCredential
+     * @covers \ZfcUser\Authentication\Adapter\Db::preprocessCredential
+     * @covers \ZfcUser\Authentication\Adapter\Db::setCredentialPreprocessor
+     * @covers \ZfcUser\Authentication\Adapter\Db::getCredentialPreprocessor
      */
     public function testPreprocessCredentialWithoutCallable()
     {
-        $this->assertSame('zfcUser', $this->db->preprocessCredential('zfcUser'));
+        $this->db->setCredentialPreprocessor(false);
+        $this->assertSame('zfcUser', $this->db->preProcessCredential('zfcUser'));
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::getServiceManager
-     * @covers ZfcUser\Authentication\Adapter\Db::setServiceManager
+     * @covers \ZfcUser\Authentication\Adapter\Db::setServiceManager
+     * @covers \ZfcUser\Authentication\Adapter\Db::getServiceManager
      */
     public function testGetServiceManager()
     {
-        $this->assertSame($this->services, $this->db->getServiceManager());
+        $sm = $this->getMock('Laminas\ServiceManager\ServiceManager');
+
+        $this->db->setServiceManager($sm);
+
+        $serviceManager = $this->db->getServiceManager();
+
+        $this->assertInstanceOf('Laminas\ServiceManager\ServiceLocatorInterface', $serviceManager);
+        $this->assertSame($sm, $serviceManager);
     }
 
     /**
-     * @depends testGetServiceManager
-     * @covers ZfcUser\Authentication\Adapter\Db::getOptions
+     * @covers \ZfcUser\Authentication\Adapter\Db::getOptions
      */
     public function testLazyLoadOptions()
     {
-        $this->assertEquals($this->options, $this->db->getOptions());
+        $serviceMapper = $this->getMock('Laminas\ServiceManager\ServiceManager');
+        $serviceMapper->expects($this->once())
+            ->method('get')
+            ->with('zfcuser_module_options')
+            ->will($this->returnValue($this->options));
+
+        $this->db->setServiceManager($serviceMapper);
+
+        $options = $this->db->getOptions();
+
+        $this->assertInstanceOf('ZfcUser\Options\ModuleOptions', $options);
+        $this->assertSame($this->options, $options);
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::setOptions
-     * @covers ZfcUser\Authentication\Adapter\Db::getOptions
+     * @covers \ZfcUser\Authentication\Adapter\Db::setOptions
+     * @covers \ZfcUser\Authentication\Adapter\Db::getOptions
      */
     public function testSetOptions()
     {
@@ -470,17 +480,26 @@ class DbTest extends TestCase
     }
 
     /**
-     * @depends testGetServiceManager
-     * @covers ZfcUser\Authentication\Adapter\Db::getMapper
+     * @covers \ZfcUser\Authentication\Adapter\Db::getMapper
      */
     public function testLazyLoadMapper()
     {
-        $this->assertEquals($this->mapper, $this->db->getMapper());
+        $serviceMapper = $this->getMock('Laminas\ServiceManager\ServiceManager');
+        $serviceMapper->expects($this->once())
+            ->method('get')
+            ->with('zfcuser_user_mapper')
+            ->will($this->returnValue($this->mapper));
+
+        $this->db->setServiceManager($serviceMapper);
+
+        $mapper = $this->db->getMapper();
+        $this->assertInstanceOf('ZfcUser\Mapper\UserInterface', $mapper);
+        $this->assertSame($this->mapper, $mapper);
     }
 
     /**
-     * @covers ZfcUser\Authentication\Adapter\Db::setMapper
-     * @covers ZfcUser\Authentication\Adapter\Db::getMapper
+     * @covers \ZfcUser\Authentication\Adapter\Db::setMapper
+     * @covers \ZfcUser\Authentication\Adapter\Db::getMapper
      */
     public function testSetMapper()
     {
@@ -542,7 +561,7 @@ class DbTest extends TestCase
             ->method('read')
             ->will($this->returnValue(array('is_satisfied' => false)));
 
-        $post = $this->getMock('Zend\Stdlib\Parameters');
+        $post = $this->getMock('Laminas\Stdlib\Parameters');
         $post->expects($this->at(0))
             ->method('get')
             ->with('identity')
@@ -552,7 +571,7 @@ class DbTest extends TestCase
             ->with('credential')
             ->will($this->returnValue($credential));
 
-        $request = $this->getMock('Zend\Http\Request');
+        $request = $this->getMock('Laminas\Http\Request');
         $request->expects($this->exactly(2))
             ->method('getPost')
             ->will($this->returnValue($post));

@@ -2,29 +2,22 @@
 
 namespace ZfcUser\Authentication\Adapter;
 
-use InvalidArgumentException;
-use Zend\Authentication\Result as AuthenticationResult;
-use Zend\Crypt\Password\Bcrypt;
-use Zend\ServiceManager\ServiceManager;
-use Zend\ServiceManager\ServiceManagerAwareInterface;
-use Zend\Session\Container as SessionContainer;
-use ZfcUser\Authentication\Adapter\AdapterChainEvent as AuthenticationEvent;
-use ZfcUser\Entity\UserInterface as UserEntity;
-use ZfcUser\Mapper\HydratorInterface as Hydrator;
-use ZfcUser\Mapper\UserInterface as UserMapper;
-use ZfcUser\Options\AuthenticationOptionsInterface as AuthenticationOptions;
+use Interop\Container\ContainerInterface;
+use Laminas\Authentication\Result as AuthenticationResult;
+use Laminas\EventManager\EventInterface;
+use Laminas\ServiceManager\ServiceManager;
+use Laminas\Crypt\Password\Bcrypt;
+use Laminas\Session\Container as SessionContainer;
+use ZfcUser\Entity\UserInterface;
+use ZfcUser\Mapper\UserInterface as UserMapperInterface;
+use ZfcUser\Options\ModuleOptions;
 
-class Db extends AbstractAdapter implements ServiceManagerAwareInterface
+class Db extends AbstractAdapter
 {
     /**
      * @var UserMapper
      */
     protected $mapper;
-
-    /**
-     * @var Hydrator
-     */
-    protected $hydrator;
 
     /**
      * @var callable
@@ -37,19 +30,24 @@ class Db extends AbstractAdapter implements ServiceManagerAwareInterface
     protected $serviceManager;
 
     /**
-     * @var AuthenticationOptions
+     * @var ModuleOptions
      */
     protected $options;
 
     /**
      * Called when user id logged out
+     * @param AdapterChainEvent $e
      */
-    public function logout()
+    public function logout(AdapterChainEvent $e)
     {
         $this->getStorage()->clear();
     }
 
-    public function authenticate(AuthenticationEvent $event)
+    /**
+     * @param AdapterChainEvent $e
+     * @return bool
+     */
+    public function authenticate(AdapterChainEvent $e)
     {
         if ($this->isSatisfied()) {
             $storage = $this->getStorage()->read();
@@ -62,6 +60,7 @@ class Db extends AbstractAdapter implements ServiceManagerAwareInterface
         $identity   = $event->getRequest()->getPost()->get('identity');
         $credential = $event->getRequest()->getPost()->get('credential');
         $credential = $this->preProcessCredential($credential);
+        /** @var UserInterface|null $userObject */
         $userObject = null;
 
         // Cycle through the configured identity sources and test each
@@ -121,7 +120,7 @@ class Db extends AbstractAdapter implements ServiceManagerAwareInterface
               ->setMessages(array('Authentication successful.'));
     }
 
-    protected function updateUserPasswordHash(UserEntity $user, $password, Bcrypt $bcrypt)
+    protected function updateUserPasswordHash(UserInterface $userObject, $password, Bcrypt $bcrypt)
     {
         $hash = explode('$', $user->getPassword());
         if ($hash[2] === $bcrypt->getCost()) {
@@ -131,11 +130,12 @@ class Db extends AbstractAdapter implements ServiceManagerAwareInterface
         $this->getMapper()->update($user);
     }
 
-    public function preprocessCredential($credential)
+    public function preProcessCredential($credential)
     {
         if (is_callable($this->credentialPreprocessor)) {
             return call_user_func($this->credentialPreprocessor, $credential);
         }
+
         return $credential;
     }
 
@@ -149,6 +149,7 @@ class Db extends AbstractAdapter implements ServiceManagerAwareInterface
         if (!$this->mapper instanceof UserMapper) {
             $this->setMapper($this->serviceManager->get('zfcuser_user_mapper'));
         }
+
         return $this->mapper;
     }
 
@@ -161,6 +162,7 @@ class Db extends AbstractAdapter implements ServiceManagerAwareInterface
     public function setMapper(UserMapper $mapper)
     {
         $this->mapper = $mapper;
+
         return $this;
     }
 
@@ -200,8 +202,8 @@ class Db extends AbstractAdapter implements ServiceManagerAwareInterface
     /**
      * Set credentialPreprocessor.
      *
-     * @param  callable $credentialPreprocessor the value to be set
-     * @throws InvalidArgumentException when argument is not callable
+     * @param callable $credentialPreprocessor
+     * @return $this
      */
     public function setCredentialPreprocessor($credentialPreprocessor)
     {
@@ -228,30 +230,30 @@ class Db extends AbstractAdapter implements ServiceManagerAwareInterface
     /**
      * Set service manager instance
      *
-     * @param ServiceManager $locator
-     * @return void
+     * @param ContainerInterface $serviceManager
      */
-    public function setServiceManager(ServiceManager $serviceManager)
+    public function setServiceManager(ContainerInterface $serviceManager)
     {
         $this->serviceManager = $serviceManager;
     }
 
     /**
-     * @param AuthenticationOptions $options
+     * @param ModuleOptions $options
      */
-    public function setOptions(AuthenticationOptions $options)
+    public function setOptions(ModuleOptions $options)
     {
         $this->options = $options;
     }
 
     /**
-     * @return AuthenticationOptions
+     * @return ModuleOptions
      */
     public function getOptions()
     {
-        if (!$this->options instanceof AuthenticationOptions) {
-            $this->setOptions($this->serviceManager->get('zfcuser_module_options'));
+        if ($this->options === null) {
+            $this->setOptions($this->getServiceManager()->get('zfcuser_module_options'));
         }
+
         return $this->options;
     }
 }

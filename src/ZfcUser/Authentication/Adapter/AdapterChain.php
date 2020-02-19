@@ -2,16 +2,19 @@
 
 namespace ZfcUser\Authentication\Adapter;
 
-use Zend\Authentication\Adapter\AdapterInterface;
-use Zend\Authentication\Result as AuthenticationResult;
-use Zend\EventManager\Event;
-use Zend\Stdlib\RequestInterface as Request;
-use Zend\Stdlib\ResponseInterface as Response;
-use ZfcBase\EventManager\EventProvider;
+use Laminas\Authentication\Adapter\AdapterInterface;
+use Laminas\Authentication\Result as AuthenticationResult;
+use Laminas\EventManager\Event;
+use Laminas\EventManager\EventInterface;
+use Laminas\EventManager\EventManagerAwareTrait;
+use Laminas\Stdlib\RequestInterface as Request;
+use Laminas\Stdlib\ResponseInterface as Response;
 use ZfcUser\Exception;
 
-class AdapterChain extends EventProvider implements AdapterInterface
+class AdapterChain implements AdapterInterface
 {
+    use EventManagerAwareTrait;
+
     /**
      * @var AdapterChainEvent
      */
@@ -49,11 +52,13 @@ class AdapterChain extends EventProvider implements AdapterInterface
         $e = $this->getEvent();
         $e->setRequest($request);
 
-        $this->getEventManager()->trigger('authenticate.pre', $e);
+        $e->setName('authenticate.pre');
+        $this->getEventManager()->triggerEvent($e);
 
-        $result = $this->getEventManager()->trigger('authenticate', $e, function ($test) {
+        $e->setName('authenticate');
+        $result = $this->getEventManager()->triggerEventUntil(function ($test) {
             return ($test instanceof Response);
-        });
+        }, $e);
 
         if ($result->stopped()) {
             if ($result->last() instanceof Response) {
@@ -69,11 +74,14 @@ class AdapterChain extends EventProvider implements AdapterInterface
         }
 
         if ($e->getIdentity()) {
-            $this->getEventManager()->trigger('authenticate.success', $e);
+            $e->setName('authenticate.success');
+            $this->getEventManager()->triggerEvent($e);
             return true;
         }
 
-        $this->getEventManager()->trigger('authenticate.fail', $e);
+        $e->setName('authenticate.fail');
+        $this->getEventManager()->triggerEvent($e);
+
         return false;
     }
 
@@ -84,13 +92,17 @@ class AdapterChain extends EventProvider implements AdapterInterface
      */
     public function resetAdapters()
     {
-        $listeners = $this->getEventManager()->getListeners('authenticate');
-        foreach ($listeners as $listener) {
-            $listener = $listener->getCallback();
-            if (is_array($listener) && $listener[0] instanceof ChainableAdapter) {
-                $listener[0]->getStorage()->clear();
+        $sharedManager = $this->getEventManager()->getSharedManager();
+
+        if ($sharedManager) {
+            $listeners = $sharedManager->getListeners(['authenticate'], 'authenticate');
+            foreach ($listeners as $listener) {
+                if (is_array($listener) && $listener[0] instanceof ChainableAdapter) {
+                    $listener[0]->getStorage()->clear();
+                }
             }
         }
+
         return $this;
     }
 
@@ -102,7 +114,9 @@ class AdapterChain extends EventProvider implements AdapterInterface
     public function logoutAdapters()
     {
         //Adapters might need to perform additional cleanup after logout
-        $this->getEventManager()->trigger('logout', $this->getEvent());
+        $e = $this->getEvent();
+        $e->setName('logout');
+        $this->getEventManager()->triggerEvent($e);
     }
 
     /**
@@ -116,6 +130,7 @@ class AdapterChain extends EventProvider implements AdapterInterface
             $this->setEvent(new AdapterChainEvent);
             $this->event->setTarget($this);
         }
+
         return $this->event;
     }
 
@@ -134,7 +149,9 @@ class AdapterChain extends EventProvider implements AdapterInterface
             $e = new AdapterChainEvent();
             $e->setParams($eventParams);
         }
+
         $this->event = $e;
+
         return $this;
     }
 }

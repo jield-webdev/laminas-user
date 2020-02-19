@@ -1,8 +1,10 @@
 <?php
 namespace ZfcUserTest\Factory\Form;
 
-use Zend\ServiceManager\ServiceManager;
-use ZfcUser\Factory\Form\RegisterFormFactory;
+use Laminas\Form\FormElementManager;
+use Laminas\ServiceManager\ServiceManager;
+use Laminas\Hydrator\ClassMethods;
+use ZfcUser\Factory\Form\Register as RegisterFactory;
 use ZfcUser\Options\ModuleOptions;
 use ZfcUser\Mapper\User as UserMapper;
 
@@ -13,9 +15,13 @@ class RegisterFormFactoryTest extends \PHPUnit_Framework_TestCase
         $serviceManager = new ServiceManager;
         $serviceManager->setService('zfcuser_module_options', new ModuleOptions);
         $serviceManager->setService('zfcuser_user_mapper', new UserMapper);
+        $serviceManager->setService('zfcuser_register_form_hydrator', new ClassMethods());
 
-        $factory = new RegisterFormFactory;
+        $formElementManager = new FormElementManager($serviceManager);
+        $serviceManager->setService('FormElementManager', $formElementManager);
 
-        $this->assertInstanceOf('ZfcUser\Form\Register', $factory->createService($serviceManager));
+        $factory = new RegisterFactory();
+
+        $this->assertInstanceOf('ZfcUser\Form\Register', $factory->__invoke($serviceManager, 'ZfcUser\Form\Register'));
     }
 }

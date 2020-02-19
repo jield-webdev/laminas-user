@@ -2,7 +2,7 @@
 
 namespace ZfcUser\Options;
 
-use Zend\Stdlib\AbstractOptions;
+use Laminas\Stdlib\AbstractOptions;
 
 class ModuleOptions extends AbstractOptions implements UserControllerOptionsInterface, UserServiceOptionsInterface
 {
@@ -339,7 +339,7 @@ class ModuleOptions extends AbstractOptions implements UserControllerOptionsInte
      * @param Array $states
      * @return ModuleOptions
      */
-    public function setAllowedLoginStates(Array $states)
+    public function setAllowedLoginStates(array $states)
     {
         $this->allowedLoginStates = $states;
         return $this;

@@ -2,14 +2,13 @@
 
 namespace ZfcUser\Form;
 
-use Zend\Form\Element;
-use ZfcBase\Form\ProvidesEventsForm;
+use Laminas\Form\Element;
 
 class Base extends ProvidesEventsForm
 {
-    public function __construct()
+    public function __construct($name = null)
     {
-        parent::__construct();
+        parent::__construct($name);
 
         $this->add(array(
             'name' => 'username',
@@ -17,7 +16,8 @@ class Base extends ProvidesEventsForm
                 'label' => 'Username',
             ),
             'attributes' => array(
-                'type' => 'text'
+                'id' => 'username',
+                'type' => 'text',
             ),
         ));
 
@@ -27,7 +27,8 @@ class Base extends ProvidesEventsForm
                 'label' => 'Email',
             ),
             'attributes' => array(
-                'type' => 'text'
+                'id' => 'email',
+                'type' => 'text',
             ),
         ));
 
@@ -37,7 +38,8 @@ class Base extends ProvidesEventsForm
                 'label' => 'Display Name',
             ),
             'attributes' => array(
-                'type' => 'text'
+                'id' => 'display_name',
+                'type' => 'text',
             ),
         ));
 
@@ -48,7 +50,8 @@ class Base extends ProvidesEventsForm
                 'label' => 'Password',
             ),
             'attributes' => array(
-                'type' => 'password'
+                'id' => 'password',
+                'type' => 'password',
             ),
         ));
 
@@ -59,7 +62,8 @@ class Base extends ProvidesEventsForm
                 'label' => 'Password Verify',
             ),
             'attributes' => array(
-                'type' => 'password'
+                'id' => 'passwordVerify',
+                'type' => 'password',
             ),
         ));
 
@@ -75,8 +79,8 @@ class Base extends ProvidesEventsForm
         ));
 
         $this->add(array(
-            'name' => 'id',
-            'type' => 'Zend\Form\Element\Hidden',
+            'name' => 'userId',
+            'type' => 'Laminas\Form\Element\Hidden',
             'attributes' => array(
                 'type' => 'hidden'
             ),
@@ -86,5 +90,9 @@ class Base extends ProvidesEventsForm
         //$csrf = new Element\Csrf('csrf');
         //$csrf->getValidator()->setTimeout($this->getRegistrationOptions()->getUserFormTimeout());
         //$this->add($csrf);
+    }
+
+    public function init()
+    {
     }
 }

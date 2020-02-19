@@ -18,11 +18,12 @@
 
 namespace ZfcUser\Controller;
 
-use Zend\Form\Form;
-use Zend\Mvc\Controller\AbstractActionController;
-use Zend\Stdlib\ResponseInterface as Response;
-use Zend\Stdlib\Parameters;
-use Zend\View\Model\ViewModel;
+use Laminas\Form\FormInterface;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\ServiceManager\ServiceLocatorInterface;
+use Laminas\Stdlib\ResponseInterface as Response;
+use Laminas\Stdlib\Parameters;
+use Laminas\View\Model\ViewModel;
 use ZfcUser\Service\User as UserService;
 use ZfcUser\Options\UserControllerOptionsInterface;
 
@@ -39,18 +40,22 @@ class UserController extends AbstractActionController
     protected $userService;
 
     /**
-     * @var Form
+     * @var FormInterface
      */
     protected $loginForm;
 
     /**
-     * @var Form
+     * @var FormInterface
      */
     protected $registerForm;
 
     /**
-     * @todo Make this dynamic / translation-friendly
-     * @var string
+     * @var FormInterface
+     */
+    protected $changePasswordForm;
+
+    /**
+     * @var FormInterface
      */
     protected $failedLoginMessage = 'Authentication failed. Please try again.';
 
@@ -72,6 +77,27 @@ class UserController extends AbstractActionController
         $this->loginForm = $loginForm;
     }
     
+    /**
+     * @var callable $redirectCallback
+     */
+    protected $redirectCallback;
+
+    /**
+     * @var ServiceLocatorInterface
+     */
+    protected $serviceLocator;
+
+    /**
+     * @param callable $redirectCallback
+     */
+    public function __construct($redirectCallback)
+    {
+        if (!is_callable($redirectCallback)) {
+            throw new \InvalidArgumentException('You must supply a callable redirectCallback');
+        }
+        $this->redirectCallback = $redirectCallback;
+    }
+
     /**
      * User page
      */
@@ -140,13 +166,9 @@ class UserController extends AbstractActionController
         $this->zfcUserAuthentication()->getAuthAdapter()->logoutAdapters();
         $this->zfcUserAuthentication()->getAuthService()->clearIdentity();
 
-        $redirect = $this->params()->fromPost('redirect', $this->params()->fromQuery('redirect', false));
+        $redirect = $this->redirectCallback;
 
-        if ($this->options->getUseRedirectParameterIfPresent() && $redirect) {
-            return $this->redirect()->toRoute($redirect);
-        }
-
-        return $this->redirect()->toRoute($this->options->getLogoutRedirectRoute());
+        return $redirect();
     }
 
     /**
@@ -179,17 +201,9 @@ class UserController extends AbstractActionController
             );
         }
 
-        if ($this->options->getUseRedirectParameterIfPresent() && $redirect) {
-            return $this->redirect()->toRoute($redirect);
-        }
+        $redirect = $this->redirectCallback;
 
-        $route = $this->options->getLoginRedirectRoute();
-
-        if (is_callable($route)) {
-            $route = $route($this->zfcUserAuthentication()->getIdentity());
-        }
-
-        return $this->redirect()->toRoute($route);
+        return $redirect();
     }
 
     /**
@@ -258,5 +272,223 @@ class UserController extends AbstractActionController
 
         // TODO: Add the redirect parameter here...
         return $this->redirect()->toUrl($this->url()->fromRoute(static::ROUTE_LOGIN) . ($redirect ? '?redirect='. rawurlencode($redirect) : ''));
+    }
+
+    /**
+     * Change the users password
+     */
+    public function changepasswordAction()
+    {
+        // if the user isn't logged in, we can't change password
+        if (!$this->zfcUserAuthentication()->hasIdentity()) {
+            // redirect to the login redirect route
+            return $this->redirect()->toRoute($this->getOptions()->getLoginRedirectRoute());
+        }
+
+        $form = $this->getChangePasswordForm();
+        $prg = $this->prg(static::ROUTE_CHANGEPASSWD);
+
+        $fm = $this->flashMessenger()->setNamespace('change-password')->getMessages();
+        if (isset($fm[0])) {
+            $status = $fm[0];
+        } else {
+            $status = null;
+        }
+
+        if ($prg instanceof Response) {
+            return $prg;
+        } elseif ($prg === false) {
+            return array(
+                'status' => $status,
+                'changePasswordForm' => $form,
+            );
+        }
+
+        $form->setData($prg);
+
+        if (!$form->isValid()) {
+            return array(
+                'status' => false,
+                'changePasswordForm' => $form,
+            );
+        }
+
+        if (!$this->getUserService()->changePassword($form->getData())) {
+            return array(
+                'status' => false,
+                'changePasswordForm' => $form,
+            );
+        }
+
+        $this->flashMessenger()->setNamespace('change-password')->addMessage(true);
+        return $this->redirect()->toRoute(static::ROUTE_CHANGEPASSWD);
+    }
+
+    public function changeEmailAction()
+    {
+        // if the user isn't logged in, we can't change email
+        if (!$this->zfcUserAuthentication()->hasIdentity()) {
+            // redirect to the login redirect route
+            return $this->redirect()->toRoute($this->getOptions()->getLoginRedirectRoute());
+        }
+
+        $form = $this->getChangeEmailForm();
+        $request = $this->getRequest();
+        $request->getPost()->set('identity', $this->getUserService()->getAuthService()->getIdentity()->getEmail());
+
+        $fm = $this->flashMessenger()->setNamespace('change-email')->getMessages();
+        if (isset($fm[0])) {
+            $status = $fm[0];
+        } else {
+            $status = null;
+        }
+
+        $prg = $this->prg(static::ROUTE_CHANGEEMAIL);
+        if ($prg instanceof Response) {
+            return $prg;
+        } elseif ($prg === false) {
+            return array(
+                'status' => $status,
+                'changeEmailForm' => $form,
+            );
+        }
+
+        $form->setData($prg);
+
+        if (!$form->isValid()) {
+            return array(
+                'status' => false,
+                'changeEmailForm' => $form,
+            );
+        }
+
+        $change = $this->getUserService()->changeEmail($prg);
+
+        if (!$change) {
+            $this->flashMessenger()->setNamespace('change-email')->addMessage(false);
+            return array(
+                'status' => false,
+                'changeEmailForm' => $form,
+            );
+        }
+
+        $this->flashMessenger()->setNamespace('change-email')->addMessage(true);
+        return $this->redirect()->toRoute(static::ROUTE_CHANGEEMAIL);
+    }
+
+    /**
+     * Getters/setters for DI stuff
+     */
+
+    public function getUserService()
+    {
+        if (!$this->userService) {
+            $this->userService = $this->serviceLocator->get('zfcuser_user_service');
+        }
+        return $this->userService;
+    }
+
+    public function setUserService(UserService $userService)
+    {
+        $this->userService = $userService;
+        return $this;
+    }
+
+    public function getRegisterForm()
+    {
+        if (!$this->registerForm) {
+            $this->setRegisterForm($this->serviceLocator->get('zfcuser_register_form'));
+        }
+        return $this->registerForm;
+    }
+
+    public function setRegisterForm(FormInterface$registerForm)
+    {
+        $this->registerForm = $registerForm;
+    }
+
+    public function getLoginForm()
+    {
+        if (!$this->loginForm) {
+            $this->setLoginForm($this->serviceLocator->get('zfcuser_login_form'));
+        }
+        return $this->loginForm;
+    }
+
+    public function setLoginForm(FormInterface $loginForm)
+    {
+        $this->loginForm = $loginForm;
+        return $this;
+    }
+
+    public function getChangePasswordForm()
+    {
+        if (!$this->changePasswordForm) {
+            $this->setChangePasswordForm($this->serviceLocator->get('zfcuser_change_password_form'));
+        }
+        return $this->changePasswordForm;
+    }
+
+    public function setChangePasswordForm(FormInterface $changePasswordForm)
+    {
+        $this->changePasswordForm = $changePasswordForm;
+        return $this;
+    }
+
+    /**
+     * set options
+     *
+     * @param UserControllerOptionsInterface $options
+     * @return UserController
+     */
+    public function setOptions(UserControllerOptionsInterface $options)
+    {
+        $this->options = $options;
+        return $this;
+    }
+
+    /**
+     * get options
+     *
+     * @return UserControllerOptionsInterface
+     */
+    public function getOptions()
+    {
+        if (!$this->options instanceof UserControllerOptionsInterface) {
+            $this->setOptions($this->serviceLocator->get('zfcuser_module_options'));
+        }
+        return $this->options;
+    }
+
+    /**
+     * Get changeEmailForm.
+     * @return ChangeEmailForm
+     */
+    public function getChangeEmailForm()
+    {
+        if (!$this->changeEmailForm) {
+            $this->setChangeEmailForm($this->serviceLocator->get('zfcuser_change_email_form'));
+        }
+        return $this->changeEmailForm;
+    }
+
+    /**
+     * Set changeEmailForm.
+     *
+     * @param $changeEmailForm - the value to set.
+     * @return $this
+     */
+    public function setChangeEmailForm($changeEmailForm)
+    {
+        $this->changeEmailForm = $changeEmailForm;
+        return $this;
+    }
+
+    /**
+     * @param $serviceLocator
+     */
+    public function setServiceLocator($serviceLocator)
+    {
+        $this->serviceLocator = $serviceLocator;
     }
 }

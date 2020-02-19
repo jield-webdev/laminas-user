@@ -14,7 +14,7 @@ class AdapterChainServiceFactoryTest extends \PHPUnit_Framework_TestCase
     protected $factory;
 
     /**
-     * @var \Zend\ServiceManager\ServiceLocatorInterface
+     * @var \Laminas\ServiceManager\ServiceLocatorInterface
      */
     protected $serviceLocator;
 
@@ -24,14 +24,14 @@ class AdapterChainServiceFactoryTest extends \PHPUnit_Framework_TestCase
     protected $options;
 
     /**
-     * @var \Zend\EventManager\EventManagerInterface
+     * @var \Laminas\EventManager\EventManagerInterface
      */
     protected $eventManager;
 
 
     protected $serviceLocatorArray;
 
-    public function helperServiceLocator ($index)
+    public function helperServiceLocator($index)
     {
         return $this->serviceLocatorArray[$index];
     }
@@ -41,7 +41,7 @@ class AdapterChainServiceFactoryTest extends \PHPUnit_Framework_TestCase
      */
     protected function setUp()
     {
-        $this->serviceLocator = $this->getMock('Zend\ServiceManager\ServiceLocatorInterface');
+        $this->serviceLocator = $this->getMock('Laminas\ServiceManager\ServiceLocatorInterface');
 
         $this->options = $this->getMockBuilder('ZfcUser\Options\ModuleOptions')
             ->disableOriginalConstructor()
@@ -55,7 +55,7 @@ class AdapterChainServiceFactoryTest extends \PHPUnit_Framework_TestCase
             ->method('get')
             ->will($this->returnCallback(array($this,'helperServiceLocator')));
 
-        $this->eventManager = $this->getMock('Zend\EventManager\EventManager');
+        $this->eventManager = $this->getMock('Laminas\EventManager\EventManager');
 
         $this->factory = new AdapterChainServiceFactory();
     }
@@ -83,10 +83,9 @@ class AdapterChainServiceFactoryTest extends \PHPUnit_Framework_TestCase
                       ->method('getAuthAdapters')
                       ->will($this->returnValue($adapterNames));
 
-        $adapterChain = $this->factory->createService($this->serviceLocator);
+        $adapterChain = $this->factory->__invoke($this->serviceLocator, 'ZfcUser\Authentication\Adapter\AdapterChain');
 
         $this->assertInstanceOf('ZfcUser\Authentication\Adapter\AdapterChain', $adapterChain);
-        $this->assertEquals(array('authenticate', 'logout'), $adapterChain->getEventManager()->getEvents());
     }
 
     /**

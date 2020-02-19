@@ -2,8 +2,7 @@
 
 namespace ZfcUser\Authentication\Adapter;
 
-use Zend\Authentication\Storage\StorageInterface;
-use Zend\Authentication\Storage\Session as SessionStorage;
+use Laminas\Authentication\Storage;
 
 abstract class AbstractAdapter implements ChainableAdapter
 {
