@@ -63,7 +63,7 @@
   },
   "autoload": {
     "psr-4": {
-      "ZfcUser": "src/"
+      "ZfcUser\\": "src/"
     }
   }
 }
